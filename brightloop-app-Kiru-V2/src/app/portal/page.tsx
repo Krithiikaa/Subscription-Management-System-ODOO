@@ -33,10 +33,22 @@ export default async function PortalPage() {
           <p className="font-serif" style={{ fontSize: "var(--text-lg)", fontWeight: 700, marginTop: 4 }}>My subscriptions</p>
           <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", marginTop: 8 }}>View your active and past subscriptions.</p>
         </Link>
+        <Link href="/portal/invoices" className="panel" style={{ padding: "24px", width: 220, textDecoration: "none", color: "inherit" }}>
+          <p className="label">Invoices</p>
+          <p className="font-serif" style={{ fontSize: "var(--text-lg)", fontWeight: 700, marginTop: 4 }}>My invoices</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", marginTop: 8 }}>View invoices, outstanding balances and due dates.</p>
+        </Link>
+        <Link href="/portal/payments" className="panel" style={{ padding: "24px", width: 220, textDecoration: "none", color: "inherit" }}>
+          <p className="label">Payments</p>
+          <p className="font-serif" style={{ fontSize: "var(--text-lg)", fontWeight: 700, marginTop: 4 }}>My payments</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", marginTop: 8 }}>Pay outstanding invoices and view payment history.</p>
+        </Link>
+        <Link href="/portal/software-access" className="panel" style={{ padding: "24px", width: 220, textDecoration: "none", color: "inherit" }}>
+          <p className="label">Software Access</p>
+          <p className="font-serif" style={{ fontSize: "var(--text-lg)", fontWeight: 700, marginTop: 4 }}>My software access</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", marginTop: 8 }}>Launch software you&apos;re entitled to use.</p>
+        </Link>
       </div>
-      <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)", marginTop: 24 }}>
-        Invoices will appear here in a later phase.
-      </p>
     </main>
   );
 }

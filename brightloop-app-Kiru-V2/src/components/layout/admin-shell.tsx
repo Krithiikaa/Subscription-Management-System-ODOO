@@ -115,6 +115,28 @@ const REPEAT_ICON = (
   </svg>
 );
 
+const RECEIPT_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+    <line x1="8" y1="8" x2="16" y2="8" />
+    <line x1="8" y1="12" x2="16" y2="12" />
+    <line x1="8" y1="16" x2="12" y2="16" />
+  </svg>
+);
+
+const CARD_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="1" y="4" width="22" height="16" rx="2" />
+    <line x1="1" y1="10" x2="23" y2="10" />
+  </svg>
+);
+
+const KEY_ICON = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+  </svg>
+);
+
 function BrandMark() {
   return (
     <div className="app-sidebar-brand">
@@ -163,10 +185,17 @@ export function AdminShell({
     { href: "/admin/subscriptions", label: "Subscriptions", icon: REPEAT_ICON },
   ];
 
+  const billingGroup: NavItem[] = [
+    { href: "/admin/invoices", label: "Invoices", icon: RECEIPT_ICON },
+    { href: "/admin/payments", label: "Payments", icon: CARD_ICON },
+    { href: "/admin/software-access", label: "Software Access", icon: KEY_ICON },
+  ];
+
   const navGroups: NavGroup[] = [
     { label: role === "ADMIN" ? "Admin" : "Staff", items: adminGroup },
     { label: "Catalogue", items: catalogueGroup },
     { label: "Commercial", items: commercialGroup },
+    { label: "Billing", items: billingGroup },
   ];
 
   const allItems = navGroups.flatMap((g) => g.items);

@@ -23,11 +23,14 @@ export const productStatusEnum = pgEnum("product_status", ["ACTIVE", "INACTIVE",
 export const billingPeriodEnum = pgEnum("billing_period", ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["DRAFT", "QUOTATION", "CONFIRMED", "ACTIVE", "PAUSED", "CLOSED"]);
 export const quotationStatusEnum = pgEnum("quotation_status", ["DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED", "CANCELLED"]);
-export const invoiceStatusEnum = pgEnum("invoice_status", ["DRAFT", "CONFIRMED", "PAID", "CANCELLED"]);
+export const invoiceStatusEnum = pgEnum("invoice_status", ["DRAFT", "CONFIRMED", "PARTIALLY_PAID", "PAID", "CANCELLED"]);
 export const discountTypeEnum = pgEnum("discount_type", ["FIXED", "PERCENTAGE"]);
 export const discountScopeEnum = pgEnum("discount_scope", ["SUBSCRIPTION", "PRODUCT"]);
-export const paymentMethodEnum = pgEnum("payment_method", ["BANK_TRANSFER", "CASH", "CARD", "UPI", "CHEQUE", "OTHER"]);
+export const paymentMethodEnum = pgEnum("payment_method", ["BANK_TRANSFER", "CASH", "CARD", "UPI", "CHEQUE", "NETBANKING", "WALLET", "OTHER"]);
 export const auditActionEnum = pgEnum("audit_action", ["CREATED", "UPDATED", "STATUS_CHANGED", "DELETED"]);
+export const paymentStatusEnum = pgEnum("payment_status", ["SUCCESS", "FAILED", "PENDING"]);
+export const paymentSessionStatusEnum = pgEnum("payment_session_status", ["PENDING", "COMPLETED", "EXPIRED", "CANCELLED"]);
+export const softwareAccessStatusEnum = pgEnum("software_access_status", ["PENDING", "ACTIVE", "SUSPENDED", "EXPIRED", "REVOKED"]);
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +110,7 @@ export const products = pgTable("products", {
   currency: varchar("currency", { length: 3 }).notNull().default("INR"),
   notes: text("notes"),
   status: productStatusEnum("status").notNull().default("ACTIVE"),
+  demoAccessUrl: varchar("demo_access_url", { length: 500 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -387,6 +391,11 @@ export const invoices = pgTable("invoices", {
   total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
   amountPaid: numeric("amount_paid", { precision: 12, scale: 2 }).notNull().default("0"),
   sentAt: timestamp("sent_at", { withTimezone: true }),
+  cancelReason: text("cancel_reason"),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  cancelledBy: integer("cancelled_by").references(() => users.id, { onDelete: "set null" }),
+  dueSoonReminderSentAt: timestamp("due_soon_reminder_sent_at", { withTimezone: true }),
+  overdueReminderSentAt: timestamp("overdue_reminder_sent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -404,6 +413,11 @@ export const invoiceLines = pgTable("invoice_lines", {
   invoiceId: integer("invoice_id").notNull().references(() => invoices.id, { onDelete: "restrict" }),
   productId: integer("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
   variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "restrict" }),
+  planId: integer("plan_id").references(() => plans.id, { onDelete: "restrict" }),
+  productName: varchar("product_name", { length: 255 }),
+  variantName: varchar("variant_name", { length: 255 }),
+  planName: varchar("plan_name", { length: 255 }),
+  billingPeriod: billingPeriodEnum("billing_period"),
   description: text("description"),
   quantity: integer("quantity").notNull().default(1),
   unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
@@ -421,16 +435,62 @@ export const invoiceLines = pgTable("invoice_lines", {
 export const payments = pgTable("payments", {
   id: serial("id").primaryKey(),
   invoiceId: integer("invoice_id").notNull().references(() => invoices.id, { onDelete: "restrict" }),
+  customerId: integer("customer_id").references(() => customers.id, { onDelete: "restrict" }),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   method: paymentMethodEnum("method").notNull(),
+  status: paymentStatusEnum("status").notNull().default("SUCCESS"),
   paidOn: date("paid_on").notNull(),
   note: text("note"),
   idempotencyKey: varchar("idempotency_key", { length: 255 }).unique(),
+  sessionId: integer("session_id").references((): AnyPgColumn => paymentSessions.id, { onDelete: "set null" }),
+  transactionRef: varchar("transaction_ref", { length: 100 }).unique(),
+  failureReason: text("failure_reason"),
+  recordedBy: integer("recorded_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   invoiceIdx: index("payments_invoice_id_idx").on(t.invoiceId),
   paidOnIdx: index("payments_paid_on_idx").on(t.paidOn),
   amountCheck: check("payments_amount_positive", sql`${t.amount} > 0`),
+}));
+
+// ─── Payment Sessions (demo checkout) ─────────────────────────────────────────
+
+export const paymentSessions = pgTable("payment_sessions", {
+  id: serial("id").primaryKey(),
+  sessionRef: varchar("session_ref", { length: 40 }).notNull(),
+  invoiceId: integer("invoice_id").notNull().references(() => invoices.id, { onDelete: "restrict" }),
+  customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "restrict" }),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  status: paymentSessionStatusEnum("status").notNull().default("PENDING"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  completedPaymentId: integer("completed_payment_id").references((): AnyPgColumn => payments.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  sessionRefIdx: uniqueIndex("payment_sessions_session_ref_unique").on(t.sessionRef),
+  statusExpiresIdx: index("payment_sessions_status_expires_at_idx").on(t.status, t.expiresAt),
+  invoiceIdx: index("payment_sessions_invoice_id_idx").on(t.invoiceId),
+}));
+
+// ─── Software Entitlements ────────────────────────────────────────────────────
+
+export const softwareEntitlements = pgTable("software_entitlements", {
+  id: serial("id").primaryKey(),
+  subscriptionLineId: integer("subscription_line_id").notNull().references(() => subscriptionLines.id, { onDelete: "restrict" }),
+  customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "restrict" }),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
+  status: softwareAccessStatusEnum("status").notNull().default("PENDING"),
+  accessUrl: varchar("access_url", { length: 500 }),
+  activatedAt: timestamp("activated_at", { withTimezone: true }),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspendedReason: text("suspended_reason"),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  expiresAt: date("expires_at"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  subscriptionLineIdx: uniqueIndex("software_entitlements_subscription_line_unique").on(t.subscriptionLineId),
+  customerIdx: index("software_entitlements_customer_id_idx").on(t.customerId),
 }));
 
 // ─── Audit Log ────────────────────────────────────────────────────────────────

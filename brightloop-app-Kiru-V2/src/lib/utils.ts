@@ -1,6 +1,7 @@
 // Utility: merge tailwind classes
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -27,19 +28,20 @@ export function formatDate(value: string | Date | null | undefined): string {
   });
 }
 
-// Advance nextBillingDate by billing period
+// Advance nextBillingDate by billing period.
+// Uses date-fns so month/year arithmetic clamps to the last valid day of the
+// target month (e.g. Jan 31 + MONTHLY -> Feb 28/29) instead of overflowing
+// into the next month the way raw Date#setMonth does.
 export function advanceBillingDate(
   current: Date,
   period: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY"
 ): Date {
-  const d = new Date(current);
   switch (period) {
-    case "DAILY":   d.setDate(d.getDate() + 1); break;
-    case "WEEKLY":  d.setDate(d.getDate() + 7); break;
-    case "MONTHLY": d.setMonth(d.getMonth() + 1); break;
-    case "YEARLY":  d.setFullYear(d.getFullYear() + 1); break;
+    case "DAILY":   return addDays(current, 1);
+    case "WEEKLY":  return addWeeks(current, 1);
+    case "MONTHLY": return addMonths(current, 1);
+    case "YEARLY":  return addYears(current, 1);
   }
-  return d;
 }
 
 // Generate auto-number (SUB-0001, INV-0001)

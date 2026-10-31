@@ -361,3 +361,48 @@ export const renewSubscriptionSchema = z.object({
 export const assignStaffToSubscriptionSchema = z.object({
   assignedStaffId: z.number().int().positive().nullable(),
 });
+
+// ─── Billing / Invoices (Phase 4) ──────────────────────────────────────────
+
+export const INVOICE_STATUSES = ["DRAFT", "CONFIRMED", "PARTIALLY_PAID", "PAID", "CANCELLED"] as const;
+
+export const runBillingSchema = z.object({
+  dryRun: z.boolean().optional(),
+  limit: z.number().int().positive().max(5000).optional(),
+});
+
+export const cancelInvoiceSchema = z.object({
+  reason: z.string().trim().max(1000).optional(),
+});
+
+// ─── Payments (Phase 5) ────────────────────────────────────────────────────
+
+export const PAYMENT_METHODS = ["BANK_TRANSFER", "CASH", "CARD", "UPI", "CHEQUE", "NETBANKING", "WALLET", "OTHER"] as const;
+export const DEMO_PAYMENT_METHODS = ["UPI", "CARD", "NETBANKING", "WALLET"] as const;
+export const PAYMENT_STATUSES = ["SUCCESS", "FAILED", "PENDING"] as const;
+
+export const createPaymentSessionSchema = z.object({
+  invoiceId: z.number().int().positive(),
+});
+
+export const completePaymentSessionSchema = z.object({
+  method: z.enum(DEMO_PAYMENT_METHODS),
+  outcome: z.enum(["SUCCESS", "FAILURE", "PENDING"]),
+});
+
+export const recordManualPaymentSchema = z.object({
+  invoiceId: z.number().int().positive(),
+  amount: moneyString,
+  method: z.enum(PAYMENT_METHODS),
+  paidOn: isoDateSchema,
+  note: z.string().trim().max(1000).optional(),
+  reference: z.string().trim().max(100).optional(),
+});
+
+// ─── Software Access (Phase 6) ─────────────────────────────────────────────
+
+export const SOFTWARE_ACCESS_STATUSES = ["PENDING", "ACTIVE", "SUSPENDED", "EXPIRED", "REVOKED"] as const;
+
+export const suspendEntitlementSchema = z.object({
+  reason: z.string().trim().max(1000).optional(),
+});
