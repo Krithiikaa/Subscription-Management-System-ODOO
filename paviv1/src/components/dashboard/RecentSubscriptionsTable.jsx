@@ -6,7 +6,9 @@ import { RECENT_SUBSCRIPTIONS } from '../../lib/mockData';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { ExternalLink, ArrowRight } from 'lucide-react';
 
-export function RecentSubscriptionsTable() {
+export function RecentSubscriptionsTable({ subscriptions = [] }) {
+  const hasSubscriptions = subscriptions && subscriptions.length > 0;
+
   return (
     <Card className="flex flex-col">
       <CardHeader
@@ -17,13 +19,35 @@ export function RecentSubscriptionsTable() {
             to="/subscriptions"
             className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 flex items-center gap-1 transition-colors font-sans"
           >
-            View all ({RECENT_SUBSCRIPTIONS.length}) <ArrowRight className="w-3.5 h-3.5" />
+            Manage Subscriptions <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         }
       />
 
       <CardContent className="p-0 overflow-x-auto">
-        <table className="w-full text-left border-collapse font-sans">
+        {!hasSubscriptions ? (
+          <div className="py-12 px-6 text-center flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800/80 flex items-center justify-center text-stone-400 dark:text-stone-500 mb-3 border border-stone-200 dark:border-stone-700">
+              <ExternalLink className="w-6 h-6" />
+            </div>
+            <h5 className="text-sm font-semibold text-stone-900 dark:text-white">
+              No Subscriptions Recorded
+            </h5>
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400 max-w-sm">
+              Live subscription contracts will appear here once agreements are created. The database tables will be initialized in Module 4.
+            </p>
+            <div className="mt-4">
+              <Link
+                to="/subscriptions"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-400 hover:bg-amber-500 text-stone-950 transition-colors shadow-2xs"
+              >
+                Create First Subscription &rarr;
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <table className="w-full text-left border-collapse font-sans">
+
           <thead>
             <tr className="bg-stone-50/80 dark:bg-stone-900/80 border-b border-stone-200/80 dark:border-stone-800 text-[11px] font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
               <th className="py-3 px-4 sm:px-6">Customer & Account</th>
@@ -94,19 +118,22 @@ export function RecentSubscriptionsTable() {
             ))}
           </tbody>
         </table>
+        )}
       </CardContent>
 
-      <CardFooter>
-        <span className="text-xs text-stone-500 dark:text-stone-400">
-          Showing 6 most recent agreements &bull; Demo data preview
-        </span>
-        <Link
-          to="/subscriptions"
-          className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
-        >
-          Manage All Subscriptions &rarr;
-        </Link>
-      </CardFooter>
+      {hasSubscriptions && (
+        <CardFooter>
+          <span className="text-xs text-stone-500 dark:text-stone-400">
+            Showing {subscriptions.length} active agreement(s)
+          </span>
+          <Link
+            to="/subscriptions"
+            className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
+          >
+            Manage All Subscriptions &rarr;
+          </Link>
+        </CardFooter>
+      )}
     </Card>
   );
 }

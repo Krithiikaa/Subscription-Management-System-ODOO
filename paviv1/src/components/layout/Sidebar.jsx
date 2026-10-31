@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -12,12 +12,14 @@ import {
   DollarSign,
   Globe,
   Settings,
+  ShieldCheck,
   X,
   HelpCircle,
-  ShieldCheck,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { BrightloopLogo } from '../common/BrightloopLogo';
+import { useAuth } from '../../context/AuthContext';
 
 export const NAVIGATION_ITEMS = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -30,11 +32,18 @@ export const NAVIGATION_ITEMS = [
   { name: 'Discounts', path: '/discounts', icon: Tag },
   { name: 'Payments', path: '/payments', icon: DollarSign },
   { name: 'Customer Portal', path: '/portal', icon: Globe },
+  { name: 'Staff Management', path: '/staff-management', icon: ShieldCheck, adminOnly: true },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
 
 export function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const { user, profile, role } = useAuth();
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || 'Sarah Jenkins';
+  const displayRole = role
+    ? role.charAt(0).toUpperCase() + role.slice(1)
+    : 'Enterprise Admin';
 
   return (
     <>
@@ -77,6 +86,11 @@ export function Sidebar({ isOpen, onClose }) {
 
           <nav className="space-y-0.5">
             {NAVIGATION_ITEMS.map((item) => {
+              // Hide admin-only items if user is logged in as staff or customer
+              if (item.adminOnly && role && role !== 'admin') {
+                return null;
+              }
+
               const Icon = item.icon;
               const isActive =
                 item.path === '/'
@@ -135,17 +149,17 @@ export function Sidebar({ isOpen, onClose }) {
             <div className="rounded-xl bg-stone-50 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 p-3 text-xs">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-semibold mb-1">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Enterprise Suite</span>
+                <span>Supabase RBAC</span>
               </div>
               <p className="text-stone-500 dark:text-stone-400 text-[11px] leading-relaxed">
-                Automated proration, billing cycles, tax handling, and customer self-serve.
+                PostgreSQL Row Level Security, email auth triggers, and verified role boundaries.
               </p>
               <div className="mt-2.5 pt-2 border-t border-stone-200/80 dark:border-stone-800 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Engine Active
+                  Auth Ready
                 </span>
-                <span className="font-mono text-[10px]">v3.4.0</span>
+                <span className="font-mono text-[10px]">Module 2</span>
               </div>
             </div>
           </div>
@@ -153,23 +167,27 @@ export function Sidebar({ isOpen, onClose }) {
 
         {/* Sidebar Footer / User Mini Profile */}
         <div className="p-3 border-t border-stone-200/80 dark:border-stone-800 shrink-0">
-          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-stone-50 dark:bg-stone-900/40 hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors cursor-pointer border border-stone-200/60 dark:border-stone-800/80">
+          <Link
+            to="/profile"
+            onClick={onClose}
+            className="flex items-center gap-2.5 p-2 rounded-lg bg-stone-50 dark:bg-stone-900/40 hover:bg-stone-100 dark:hover:bg-stone-800/60 transition-colors cursor-pointer border border-stone-200/60 dark:border-stone-800/80"
+          >
             <div className="relative">
               <div className="w-7 h-7 rounded-full bg-amber-400 text-stone-950 font-bold flex items-center justify-center text-xs shadow-2xs">
-                SJ
+                {displayName.substring(0, 2).toUpperCase()}
               </div>
               <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-stone-900" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-stone-900 dark:text-white truncate">
-                Sarah Jenkins
+                {displayName}
               </p>
               <p className="text-[10px] text-stone-500 dark:text-stone-400 truncate">
-                Enterprise Admin
+                {displayRole}
               </p>
             </div>
             <HelpCircle className="w-4 h-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 shrink-0" />
-          </div>
+          </Link>
         </div>
       </aside>
     </>
