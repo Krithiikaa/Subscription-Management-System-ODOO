@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { AppShell } from "@/components/shared/app-shell";
 import { Button } from "@/components/ui/button";
 import { MoneyText } from "@/components/shared/money-text";
 import { DateText } from "@/components/shared/date-text";
@@ -62,8 +61,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <AppShell role="ADMIN" breadcrumbs={[{ label: "Admin Dashboard" }]}>
-      <div className="space-y-6 sm:space-y-8 font-sans">
+    <div className="space-y-6 sm:space-y-8 font-sans">
         {/* Top Hero Welcoming Header (Crextio/Nixtio style) */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
           <div className="space-y-3">
@@ -486,6 +484,5 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </AppShell>
   );
 }
