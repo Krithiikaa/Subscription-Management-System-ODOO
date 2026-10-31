@@ -3,7 +3,6 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { subscriptions, auditLogs } from "@/db/schema";
 import { requireCustomer } from "@/lib/portal-auth";
-import { signOffQuotation } from "@/lib/quotation-signoff";
 
 export async function PATCH(
   request: Request,
@@ -22,7 +21,6 @@ export async function PATCH(
   const action = body?.action as "ACCEPT" | "STAFF_SIGN" | "REJECT" | undefined;
   const staffName = body?.staffName || "Authorized Department Officer";
   const departmentName = body?.department || "Enterprise Software Operations";
-  const staffNotes = body?.notes || "Approved & digitally signed by department staff";
 
   if (!action || !["ACCEPT", "STAFF_SIGN", "REJECT"].includes(action)) {
     return NextResponse.json({ error: "Invalid action. Use ACCEPT, STAFF_SIGN, or REJECT" }, { status: 400 });
@@ -72,18 +70,18 @@ export async function PATCH(
       return NextResponse.json({ ok: true, message: "Quotation has been rejected and closed." });
     }
 
-    // Action: STAFF_SIGN / ACCEPT -> Department Sign-off, Transition to ACTIVE and generate first invoice
-    const result = await signOffQuotation({ subscriptionId: quoteId, signerUserId: session.userId, staffName, staffNotes });
-
-    return NextResponse.json({
-      ok: true,
-      message: `Quotation verified and digitally signed by ${staffName} (${result.department}). Subscription ${result.activatedSub.number} is now active and Invoice ${result.newInvoice.number} has been generated!`,
-      subscription: result.activatedSub,
-      invoice: result.newInvoice,
-      signatureCode: result.signatureCode,
-    });
+    // STAFF_SIGN / ACCEPT: sign-off is staff-only (role separation). Assigned
+    // staff sign from the staff Subscriptions page via
+    // POST /api/subscriptions/[id]/sign-off; customers can only cancel/reject.
+    return NextResponse.json(
+      { error: "Only the assigned department staff can sign this quotation. You'll be notified once it is signed." },
+      { status: 403 }
+    );
   } catch (err) {
     console.warn("DB quotation update failed, returning confirmed response:", err);
+    if (action !== "REJECT") {
+      return NextResponse.json({ error: "Only the assigned department staff can sign this quotation." }, { status: 403 });
+    }
     const signatureCode = `SIG-DEPT-${Date.now().toString(36).toUpperCase()}`;
 
     return NextResponse.json({
