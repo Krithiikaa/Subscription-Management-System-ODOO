@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { verifySession } from "@/lib/session";
 
 // Public routes — no auth required
-const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password", "/pricing", "/api/auth"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password", "/pricing", "/api/auth", "/api/health"];
 
 // Admin-only route prefixes
 const ADMIN_ROUTES = ["/admin/discounts", "/admin/taxes", "/admin/staff"];
@@ -16,6 +16,7 @@ export async function middleware(request: NextRequest) {
 
   // Allow public routes and Next.js internals
   if (
+    pathname === "/" ||
     PUBLIC_ROUTES.some((r) => pathname.startsWith(r)) ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/cron") // protected by CRON_SECRET inside the route
