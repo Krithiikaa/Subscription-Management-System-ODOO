@@ -103,8 +103,10 @@ export async function POST(request: Request) {
     }
 
     // Database is unavailable / offline fallback:
-    // If logging in with one of the standard demo accounts and password is provided (length >= 8)
-    const fallbackProfile = DEMO_FALLBACK_USERS[normalizedEmail];
+    // If logging in with one of the standard demo accounts and password is provided (length >= 8).
+    // Local development only — the password is never checked here, so in
+    // production a transient DB error would otherwise let anyone in as admin.
+    const fallbackProfile = process.env.NODE_ENV !== "production" ? DEMO_FALLBACK_USERS[normalizedEmail] : undefined;
     if (fallbackProfile && password.length >= 8) {
       const token = await createSession({
         userId: fallbackProfile.id,

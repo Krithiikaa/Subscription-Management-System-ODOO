@@ -1,9 +1,14 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
+// The fallback is public (it's in git), so tokens signed with it could be
+// forged by anyone — only allow it for local development.
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET must be set in production");
+}
 const rawSecret =
   process.env.JWT_SECRET ||
-  "brightloop-production-fallback-jwt-secret-key-must-be-at-least-32-chars!";
+  "brightloop-local-dev-only-fallback-jwt-secret-key-32-chars-min!";
 const JWT_SECRET = new TextEncoder().encode(rawSecret);
 const COOKIE_NAME = "bl_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days

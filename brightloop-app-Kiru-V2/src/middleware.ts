@@ -23,6 +23,7 @@ const ADMIN_ROUTES = [
   "/admin/variants",
   "/admin/plans",
   "/admin/staff-assignments",
+  "/admin/quotation-templates",
 ];
 
 // Staff + Admin routes (not customer)

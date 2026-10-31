@@ -12,6 +12,7 @@ import {
 } from "@/db/schema";
 import { requireCustomer } from "@/lib/portal-auth";
 import { getDepartmentForProduct } from "@/lib/departments";
+import { getAssignedStaffByProduct } from "@/lib/product-staff";
 
 export async function GET() {
   const auth = await requireCustomer();
@@ -67,20 +68,23 @@ export async function GET() {
             .where(inArray(subscriptionLines.subscriptionId, quoteIds))
         : [];
 
+    const staffByProduct = await getAssignedStaffByProduct(db, quotes.map((q) => q.productId));
+
     const quotationList = quotes
       .filter((q) => q.status === "QUOTATION" || q.number.startsWith("QUO-"))
       .map((q) => {
         const qLines = lines.filter((l) => l.subscriptionId === q.id);
         const totalAmount = qLines.reduce((acc, l) => acc + parseFloat(l.amount), 0);
         const deptInfo = getDepartmentForProduct(q.productName, q.productCategory);
+        const staff = staffByProduct.get(q.productId);
 
         return {
           ...q,
           lines: qLines,
           totalAmount: totalAmount.toFixed(2),
           department: deptInfo.department,
-          assignedStaffName: deptInfo.leadStaff,
-          assignedStaffEmail: deptInfo.email,
+          assignedStaffName: staff?.name ?? "Unassigned",
+          assignedStaffEmail: staff?.email,
           isStaffSigned: q.status === "CONFIRMED" || q.status === "ACTIVE",
           staffSignature: q.status === "ACTIVE" ? `SIG-${deptInfo.approvalCode}-${q.id}` : undefined,
           staffSignedAt: q.status === "ACTIVE" ? q.startDate : undefined,
@@ -176,6 +180,7 @@ export async function POST(request: Request) {
     const unitLinePrice = basePrice + extraPrice;
     const totalAmount = (unitLinePrice * quantity).toFixed(2);
     const deptInfo = getDepartmentForProduct(product?.name, product?.category);
+    const staffName = (await getAssignedStaffByProduct(db, [productId])).get(productId)?.name ?? "Unassigned";
 
     const [createdQuote] = await db
       .insert(subscriptions)
@@ -187,7 +192,7 @@ export async function POST(request: Request) {
         startDate: today.toISOString().split("T")[0],
         expiryDate: validityDate.toISOString().split("T")[0],
         paymentTerms: "Net 15",
-        notes: `${notes} (Assigned to ${deptInfo.department} — Staff: ${deptInfo.leadStaff})`,
+        notes: `${notes} (Assigned to ${deptInfo.department} — Staff: ${staffName})`,
       })
       .returning();
 
@@ -195,6 +200,12 @@ export async function POST(request: Request) {
       subscriptionId: createdQuote.id,
       productId: product ? product.id : productId,
       variantId: variantId || undefined,
+      // Snapshot fields so staff/admin subscription screens can show the line.
+      planId: plan?.id,
+      productName: product?.name,
+      productCode: product?.sku,
+      planName: plan?.name,
+      billingPeriod: plan?.billingPeriod,
       quantity,
       unitPrice: unitLinePrice.toFixed(2),
       taxRuleId: taxRule?.id,
@@ -214,17 +225,17 @@ export async function POST(request: Request) {
         quantity,
         totalAmount,
         department: deptInfo.department,
-        assignedStaff: deptInfo.leadStaff,
+        assignedStaff: staffName,
       }),
     });
 
     return NextResponse.json({
       ok: true,
-      message: `Quotation ${quoNumber} submitted for review to ${deptInfo.leadStaff} (${deptInfo.department})`,
+      message: `Quotation ${quoNumber} submitted for review to ${staffName} (${deptInfo.department})`,
       quotation: {
         ...createdQuote,
         department: deptInfo.department,
-        assignedStaffName: deptInfo.leadStaff,
+        assignedStaffName: staffName,
       },
     });
   } catch (err) {

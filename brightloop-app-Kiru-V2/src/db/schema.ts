@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   index,
   check,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -21,6 +22,7 @@ export const roleEnum = pgEnum("role", ["ADMIN", "STAFF", "CUSTOMER"]);
 export const productStatusEnum = pgEnum("product_status", ["ACTIVE", "INACTIVE", "ARCHIVED"]);
 export const billingPeriodEnum = pgEnum("billing_period", ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["DRAFT", "QUOTATION", "CONFIRMED", "ACTIVE", "PAUSED", "CLOSED"]);
+export const quotationStatusEnum = pgEnum("quotation_status", ["DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED", "CANCELLED"]);
 export const invoiceStatusEnum = pgEnum("invoice_status", ["DRAFT", "CONFIRMED", "PAID", "CANCELLED"]);
 export const discountTypeEnum = pgEnum("discount_type", ["FIXED", "PERCENTAGE"]);
 export const discountScopeEnum = pgEnum("discount_scope", ["SUBSCRIPTION", "PRODUCT"]);
@@ -225,9 +227,12 @@ export const staffProductAssignments = pgTable("staff_product_assignments", {
 export const quotationTemplates = pgTable("quotation_templates", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  planId: integer("plan_id").notNull().references(() => plans.id, { onDelete: "restrict" }),
+  description: text("description"),
+  planId: integer("plan_id").references(() => plans.id, { onDelete: "restrict" }), // TEMP: dropped in a follow-up reviewed migration — lines carry their own planId now
   validityDays: integer("validity_days").notNull().default(30),
+  defaultPaymentTerms: varchar("default_payment_terms", { length: 100 }),
   notes: text("notes"),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "restrict" }),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -240,8 +245,70 @@ export const templateLines = pgTable("template_lines", {
   templateId: integer("template_id").notNull().references(() => quotationTemplates.id, { onDelete: "cascade" }),
   productId: integer("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
   variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "restrict" }),
+  planId: integer("plan_id").notNull().references(() => plans.id, { onDelete: "restrict" }),
   quantity: integer("quantity").notNull().default(1),
   unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+  description: text("description"),
+});
+
+// ─── Quotations ───────────────────────────────────────────────────────────────
+
+export const quotations = pgTable("quotations", {
+  id: serial("id").primaryKey(),
+  number: varchar("number", { length: 20 }).notNull().unique(),
+  customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "restrict" }),
+  createdBy: integer("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  templateId: integer("template_id").references(() => quotationTemplates.id, { onDelete: "restrict" }),
+  status: quotationStatusEnum("status").notNull().default("DRAFT"),
+  quotationDate: date("quotation_date").notNull().defaultNow(),
+  validUntil: date("valid_until"),
+  paymentTerms: varchar("payment_terms", { length: 100 }),
+  currency: varchar("currency", { length: 3 }).notNull().default("INR"),
+  notes: text("notes"),
+  termsAndConditions: text("terms_and_conditions"),
+  subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
+  discountTotal: numeric("discount_total", { precision: 12, scale: 2 }).notNull().default("0"),
+  taxTotal: numeric("tax_total", { precision: 12, scale: 2 }).notNull().default("0"),
+  grandTotal: numeric("grand_total", { precision: 12, scale: 2 }).notNull().default("0"),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  acceptedBy: integer("accepted_by").references(() => users.id, { onDelete: "restrict" }),
+  rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+  rejectionReason: text("rejection_reason"),
+  convertedSubscriptionId: integer("converted_subscription_id").references((): AnyPgColumn => subscriptions.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  customerIdx: index("quotations_customer_id_idx").on(t.customerId),
+  statusIdx: index("quotations_status_idx").on(t.status),
+  grandTotalCheck: check("quotations_grand_total_non_negative", sql`${t.grandTotal} >= 0`),
+}));
+
+// ─── Quotation Lines ──────────────────────────────────────────────────────────
+
+export const quotationLines = pgTable("quotation_lines", {
+  id: serial("id").primaryKey(),
+  quotationId: integer("quotation_id").notNull().references(() => quotations.id, { onDelete: "cascade" }),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
+  variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "restrict" }),
+  planId: integer("plan_id").notNull().references(() => plans.id, { onDelete: "restrict" }),
+  // Snapshots — immutable once written, never recomputed from current catalogue state.
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  productCode: varchar("product_code", { length: 100 }),
+  variantName: varchar("variant_name", { length: 255 }),
+  planName: varchar("plan_name", { length: 255 }).notNull(),
+  billingPeriod: billingPeriodEnum("billing_period").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+  variantExtra: numeric("variant_extra", { precision: 12, scale: 2 }).notNull().default("0"),
+  taxRuleId: integer("tax_rule_id").references(() => taxRules.id, { onDelete: "restrict" }),
+  taxRatePct: numeric("tax_rate_pct", { precision: 5, scale: 2 }).notNull().default("0"),
+  taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  discountId: integer("discount_id").references(() => discounts.id, { onDelete: "restrict" }),
+  discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
+  lineTotal: numeric("line_total", { precision: 12, scale: 2 }).notNull(),
+  description: text("description"),
 });
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────
@@ -250,14 +317,27 @@ export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   number: varchar("number", { length: 20 }).notNull().unique(),
   customerId: integer("customer_id").notNull().references(() => customers.id, { onDelete: "restrict" }),
-  planId: integer("plan_id").notNull().references(() => plans.id, { onDelete: "restrict" }),
+  planId: integer("plan_id").references(() => plans.id, { onDelete: "restrict" }), // TEMP: dropped in a follow-up reviewed migration — lines carry their own planId now
   templateId: integer("template_id").references(() => quotationTemplates.id, { onDelete: "restrict" }),
+  quotationId: integer("quotation_id").references(() => quotations.id, { onDelete: "restrict" }),
+  createdBy: integer("created_by").references(() => users.id, { onDelete: "restrict" }),
+  assignedStaffId: integer("assigned_staff_id").references(() => users.id, { onDelete: "set null" }),
   status: subscriptionStatusEnum("status").notNull().default("DRAFT"),
   startDate: date("start_date").notNull(),
   expiryDate: date("expiry_date"),
   nextBillingDate: date("next_billing_date"),
   paymentTerms: varchar("payment_terms", { length: 100 }),
   notes: text("notes"),
+  pausedAt: timestamp("paused_at", { withTimezone: true }),
+  pausedBy: integer("paused_by").references(() => users.id, { onDelete: "restrict" }),
+  pauseReason: text("pause_reason"),
+  resumedAt: timestamp("resumed_at", { withTimezone: true }),
+  resumedBy: integer("resumed_by").references(() => users.id, { onDelete: "restrict" }),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  closedBy: integer("closed_by").references(() => users.id, { onDelete: "restrict" }),
+  closureReason: text("closure_reason"),
+  renewedFromSubscriptionId: integer("renewed_from_subscription_id").references((): AnyPgColumn => subscriptions.id, { onDelete: "set null" }),
+  renewedToSubscriptionId: integer("renewed_to_subscription_id").references((): AnyPgColumn => subscriptions.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -272,10 +352,22 @@ export const subscriptionLines = pgTable("subscription_lines", {
   subscriptionId: integer("subscription_id").notNull().references(() => subscriptions.id, { onDelete: "restrict" }),
   productId: integer("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
   variantId: integer("variant_id").references(() => productVariants.id, { onDelete: "restrict" }),
+  planId: integer("plan_id").references(() => plans.id, { onDelete: "restrict" }),
+  // Snapshots — immutable once written, never recomputed from current catalogue state.
+  productName: varchar("product_name", { length: 255 }),
+  productCode: varchar("product_code", { length: 100 }),
+  variantName: varchar("variant_name", { length: 255 }),
+  planName: varchar("plan_name", { length: 255 }),
+  billingPeriod: billingPeriodEnum("billing_period"),
   quantity: integer("quantity").notNull().default(1),
   unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull(),
+  variantExtra: numeric("variant_extra", { precision: 12, scale: 2 }).notNull().default("0"),
   taxRuleId: integer("tax_rule_id").references(() => taxRules.id, { onDelete: "restrict" }),
-  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  taxRatePct: numeric("tax_rate_pct", { precision: 5, scale: 2 }).notNull().default("0"),
+  taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  discountId: integer("discount_id").references(() => discounts.id, { onDelete: "restrict" }),
+  discountAmount: numeric("discount_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(), // final line total (subtotal - discount + tax)
 });
 
 // ─── Invoices ─────────────────────────────────────────────────────────────────
@@ -380,8 +472,17 @@ export type NewDiscount = typeof discounts.$inferInsert;
 export type StaffProductAssignment = typeof staffProductAssignments.$inferSelect;
 export type NewStaffProductAssignment = typeof staffProductAssignments.$inferInsert;
 export type QuotationTemplate = typeof quotationTemplates.$inferSelect;
+export type NewQuotationTemplate = typeof quotationTemplates.$inferInsert;
+export type TemplateLine = typeof templateLines.$inferSelect;
+export type NewTemplateLine = typeof templateLines.$inferInsert;
+export type Quotation = typeof quotations.$inferSelect;
+export type NewQuotation = typeof quotations.$inferInsert;
+export type QuotationLine = typeof quotationLines.$inferSelect;
+export type NewQuotationLine = typeof quotationLines.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
+export type SubscriptionLine = typeof subscriptionLines.$inferSelect;
+export type NewSubscriptionLine = typeof subscriptionLines.$inferInsert;
 export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceLine = typeof invoiceLines.$inferSelect;

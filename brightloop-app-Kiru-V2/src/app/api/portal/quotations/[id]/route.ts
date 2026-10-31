@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  subscriptions,
-  subscriptionLines,
-  plans,
-  products,
-  invoices,
-  invoiceLines,
-  taxRules,
-  auditLogs,
-} from "@/db/schema";
+import { subscriptions, auditLogs } from "@/db/schema";
 import { requireCustomer } from "@/lib/portal-auth";
-import { getDepartmentForProduct } from "@/lib/departments";
+import { signOffQuotation } from "@/lib/quotation-signoff";
 
 export async function PATCH(
   request: Request,
@@ -37,10 +28,6 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid action. Use ACCEPT, STAFF_SIGN, or REJECT" }, { status: 400 });
   }
 
-  const today = new Date();
-  const nextMonth = new Date(today);
-  nextMonth.setMonth(nextMonth.getMonth() + 1);
-
   try {
     // Find quotation
     const [sub] = await db
@@ -48,6 +35,12 @@ export async function PATCH(
       .from(subscriptions)
       .where(and(eq(subscriptions.id, quoteId), eq(subscriptions.customerId, customerId)))
       .limit(1);
+
+    // Ownership check — without it a customer could act on another
+    // customer's quotation by changing the id in the URL.
+    if (!sub) {
+      return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
+    }
 
     if (sub && sub.status !== "QUOTATION" && !sub.number.startsWith("QUO-")) {
       return NextResponse.json(
@@ -80,112 +73,11 @@ export async function PATCH(
     }
 
     // Action: STAFF_SIGN / ACCEPT -> Department Sign-off, Transition to ACTIVE and generate first invoice
-    const [plan] = sub ? await db.select().from(plans).where(eq(plans.id, sub.planId)).limit(1) : [null];
-    const [product] = plan ? await db.select().from(products).where(eq(products.id, plan.productId)).limit(1) : [null];
-    const deptInfo = getDepartmentForProduct(product?.name, product?.category);
-
-    const [taxRule] = await db.select().from(taxRules).limit(1);
-    const taxPct = taxRule ? parseFloat(taxRule.rate) : 18;
-
-    // Get lines
-    const lines = await db
-      .select()
-      .from(subscriptionLines)
-      .where(eq(subscriptionLines.subscriptionId, quoteId));
-
-    const subtotalNum = lines.length > 0 ? lines.reduce((acc, l) => acc + parseFloat(l.amount), 0) : 1499;
-    const taxAmountNum = (subtotalNum * taxPct) / 100;
-    const grandTotal = (subtotalNum + taxAmountNum).toFixed(2);
-    const taxAmountStr = taxAmountNum.toFixed(2);
-    const subtotalStr = subtotalNum.toFixed(2);
-
-    const newSubNumber = `SUB-${Math.floor(1000 + Math.random() * 9000)}`;
-    const invNumber = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
-    const signatureCode = `SIG-${deptInfo.approvalCode}-${Date.now().toString(36).toUpperCase()}`;
-
-    const dueDate = new Date(today);
-    dueDate.setDate(dueDate.getDate() + 7);
-
-    const result = await db.transaction(async (tx) => {
-      // 1. Activate subscription with department staff approval signature
-      const [activatedSub] = await tx
-        .update(subscriptions)
-        .set({
-          number: newSubNumber,
-          status: "ACTIVE",
-          startDate: today.toISOString().split("T")[0],
-          nextBillingDate: nextMonth.toISOString().split("T")[0],
-          notes: `Digitally signed by ${staffName} (${deptInfo.department}). Signature: ${signatureCode}. ${staffNotes}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(subscriptions.id, quoteId))
-        .returning();
-
-      // 2. Create invoice
-      const [newInvoice] = await tx
-        .insert(invoices)
-        .values({
-          number: invNumber,
-          subscriptionId: quoteId,
-          customerId,
-          status: "CONFIRMED",
-          periodStart: today.toISOString().split("T")[0],
-          periodEnd: nextMonth.toISOString().split("T")[0],
-          dueDate: dueDate.toISOString().split("T")[0],
-          subtotal: subtotalStr,
-          taxAmount: taxAmountStr,
-          discountAmount: "0.00",
-          total: grandTotal,
-          amountPaid: "0.00",
-          sentAt: new Date(),
-        })
-        .returning();
-
-      // 3. Create invoice lines
-      for (const line of lines) {
-        const [prod] = await tx.select().from(products).where(eq(products.id, line.productId)).limit(1);
-        const lineTax = ((parseFloat(line.amount) * taxPct) / 100).toFixed(2);
-        const lineTotal = (parseFloat(line.amount) + parseFloat(lineTax)).toFixed(2);
-
-        await tx.insert(invoiceLines).values({
-          invoiceId: newInvoice.id,
-          productId: line.productId,
-          variantId: line.variantId,
-          description: `${prod?.name || "Software"} - ${plan?.name || "Plan"}`,
-          quantity: line.quantity,
-          unitPrice: line.unitPrice,
-          variantExtra: "0.00",
-          taxRuleId: taxRule?.id,
-          taxRatePct: taxPct.toFixed(2),
-          taxAmount: lineTax,
-          discountAmount: "0.00",
-          lineTotal,
-        });
-      }
-
-      // 4. Audit log with department staff signature
-      await tx.insert(auditLogs).values({
-        userId: session.userId,
-        action: "STATUS_CHANGED",
-        entityType: "quotation",
-        entityId: quoteId,
-        oldValues: JSON.stringify({ status: sub?.status ?? "QUOTATION" }),
-        newValues: JSON.stringify({
-          status: "ACTIVE",
-          signedByStaff: staffName,
-          department: deptInfo.department,
-          signatureCode,
-          invoiceGenerated: invNumber,
-          signedAt: today.toISOString(),
-        }),
-      });
-
-      return { activatedSub, newInvoice, signatureCode };
-    });
+    const result = await signOffQuotation({ subscriptionId: quoteId, signerUserId: session.userId, staffName, staffNotes });
 
     return NextResponse.json({
       ok: true,
-      message: `Quotation verified and digitally signed by ${staffName} (${deptInfo.department}). Subscription ${result.activatedSub.number} is now active and Invoice ${result.newInvoice.number} has been generated!`,
+      message: `Quotation verified and digitally signed by ${staffName} (${result.department}). Subscription ${result.activatedSub.number} is now active and Invoice ${result.newInvoice.number} has been generated!`,
       subscription: result.activatedSub,
       invoice: result.newInvoice,
       signatureCode: result.signatureCode,
