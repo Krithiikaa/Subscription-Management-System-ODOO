@@ -281,6 +281,11 @@ export function AuthProvider({ children }) {
     return null;
   };
 
+  const setCustomSession = (customUser, customProfile) => {
+    setUser(customUser);
+    setProfile(customProfile);
+  };
+
   const value = {
     user,
     profile,
@@ -296,6 +301,7 @@ export function AuthProvider({ children }) {
     updatePassword,
     refreshProfile,
     validatePasswordStrength,
+    setCustomSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

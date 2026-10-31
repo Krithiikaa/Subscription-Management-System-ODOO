@@ -6,16 +6,17 @@ export function cn(...inputs) {
 }
 
 export function formatCurrency(value, currency = 'USD') {
-  return new Intl.NumberFormat('en-US', {
+  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(value);
+  }).format(value || 0);
 }
 
-export function formatNumber(value) {
-  return new Intl.NumberFormat('en-US').format(value);
+export function formatNumber(value, locale = 'en-US') {
+  return new Intl.NumberFormat(locale).format(value || 0);
 }
 
 export function formatDate(dateString) {

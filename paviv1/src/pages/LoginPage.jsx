@@ -16,8 +16,11 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+import { useDemoMode } from '../context/DemoModeContext';
+
 export function LoginPage() {
-  const { login, isConfigured, user } = useAuth();
+  const { login, isConfigured, user, setCustomSession } = useAuth();
+  const { isDemoMode, toggleDemoMode } = useDemoMode();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -80,7 +83,32 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      // Login with expected portal verification
+      if (isDemoMode) {
+        // Instant Demo Login
+        if (portalTab === 'admin') {
+          setCustomSession(
+            { id: 'admin-demo-01', email: 'admin.brightloopodoohack@gmail.com' },
+            { id: 'admin-demo-01', full_name: 'Brightloop Administrator', role: 'admin', account_status: 'active' }
+          );
+          const target = location.state?.from?.pathname || '/';
+          navigate(target);
+        } else if (portalTab === 'staff') {
+          setCustomSession(
+            { id: 'staff-demo-01', email: email || 'saravanan.r@brightloop.in' },
+            { id: 'staff-demo-01', full_name: 'Saravanan Rajendran', role: 'staff', account_status: 'active' }
+          );
+          navigate('/staff');
+        } else {
+          setCustomSession(
+            { id: 'cust-demo-01', email: email || 'pavithra.balaji@chennaicloudworks.in' },
+            { id: 'cust-demo-01', full_name: 'Pavithra Balaji', role: 'customer', account_status: 'active' }
+          );
+          navigate('/portal');
+        }
+        return;
+      }
+
+      // Live Login with expected portal verification
       const { profile } = await login(email, password, portalTab);
 
       // Successful redirect based on verified profile role
@@ -286,7 +314,13 @@ export function LoginPage() {
               </p>
             ) : portalTab === 'staff' ? (
               <p className="text-[11px] text-stone-400 dark:text-stone-500">
-                Staff accounts are invite-only. Contact your system admin if you have not received an invitation email.
+                Staff accounts are invite-only. Have an invitation token?{' '}
+                <Link
+                  to="/accept-invitation"
+                  className="font-semibold text-amber-700 dark:text-amber-400 hover:underline"
+                >
+                  Accept invitation & set password
+                </Link>
               </p>
             ) : (
               <p className="text-[11px] text-stone-400 dark:text-stone-500">

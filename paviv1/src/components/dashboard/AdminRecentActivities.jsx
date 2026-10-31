@@ -9,12 +9,40 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
+  CreditCard,
+  FileText,
+  CheckCheck,
 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 
 export function AdminRecentActivities({ activities = [], loading = false, onRefresh }) {
   const getActivityIcon = (type) => {
     switch (type) {
+      case 'payment_success':
+        return {
+          icon: CheckCircle2,
+          style: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+        };
+      case 'payment_failed':
+        return {
+          icon: AlertCircle,
+          style: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border-rose-200 dark:border-rose-800',
+        };
+      case 'invoice_generated':
+        return {
+          icon: FileText,
+          style: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+        };
+      case 'quote_accepted':
+        return {
+          icon: CheckCheck,
+          style: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800',
+        };
+      case 'sub_renewed':
+        return {
+          icon: RefreshCw,
+          style: 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+        };
       case 'admin_bootstrap':
         return {
           icon: ShieldCheck,

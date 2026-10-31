@@ -12,9 +12,12 @@ import {
   LogOut,
   LogIn,
   ShieldCheck,
+  Database,
+  Sparkles,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useDemoMode } from '../../context/DemoModeContext';
 
 const ROUTE_TITLES = {
   '/': 'Enterprise Dashboard',
@@ -39,6 +42,7 @@ export function Topbar({ onOpenSidebar }) {
   const navigate = useNavigate();
   const { theme, toggleTheme, isDark } = useTheme();
   const { user, profile, role, logout } = useAuth();
+  const { isDemoMode, toggleDemoMode } = useDemoMode();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -144,6 +148,35 @@ export function Topbar({ onOpenSidebar }) {
             </span>
           </div>
         </div>
+
+        {/* Working Demo Mode / Live Database Mode Toggle */}
+        <button
+          onClick={toggleDemoMode}
+          id="demo-mode-toggle-button"
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all focus:outline-none focus:ring-2 focus:ring-amber-400 ${
+            isDemoMode
+              ? 'bg-amber-500/10 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 hover:bg-amber-500/20 shadow-2xs'
+              : 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-200 dark:hover:bg-stone-700'
+          }`}
+          title={
+            isDemoMode
+              ? 'Demo Mode Active: 302 realistic Tamil Nadu & Indian SaaS records (₹ INR). Click to switch to Live Database.'
+              : 'Live Database Active: Direct PostgreSQL connection. Click to switch to Demo Mode.'
+          }
+          aria-label="Toggle between Demo Mode and Live Database"
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isDemoMode ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+            }`}
+          />
+          <span className="hidden sm:inline">
+            {isDemoMode ? 'Demo Mode (302 • ₹)' : 'Live DB Mode ($)'}
+          </span>
+          <span className="sm:hidden font-mono text-[11px]">
+            {isDemoMode ? 'Demo (₹)' : 'Live ($)'}
+          </span>
+        </button>
 
         {/* Working Light/Dark Theme Toggle Button */}
         <button

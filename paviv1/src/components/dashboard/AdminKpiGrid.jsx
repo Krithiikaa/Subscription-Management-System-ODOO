@@ -4,6 +4,7 @@ import {
   ShieldCheck,
   RefreshCw,
   DollarSign,
+  IndianRupee,
   Receipt,
   AlertTriangle,
   ArrowRight,
@@ -15,6 +16,9 @@ import { formatCurrency } from '../../lib/utils';
 import { Link } from 'react-router-dom';
 
 export function AdminKpiGrid({ metrics, tablesStatus, loading }) {
+  const isINR = metrics?.currency === 'INR';
+  const currencyCode = metrics?.currency || 'USD';
+
   const kpiItems = [
     {
       id: 'total-customers',
@@ -47,25 +51,25 @@ export function AdminKpiGrid({ metrics, tablesStatus, loading }) {
       label: 'Active Subscriptions',
       value: loading ? '...' : metrics.activeSubscriptions,
       formattedValue: loading ? '...' : String(metrics.activeSubscriptions),
-      timeframe: tablesStatus.subscriptions ? 'Active recurring contracts' : 'Module 4 pending',
+      timeframe: tablesStatus?.subscriptions || isINR ? 'Active recurring contracts' : 'Module 4 pending',
       icon: RefreshCw,
       path: '/subscriptions',
       colorStyle: 'bg-sky-50 text-sky-600 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800',
-      isRealData: tablesStatus.subscriptions,
-      emptyState: !tablesStatus.subscriptions ? 'Table pending migration' : metrics.activeSubscriptions === 0 ? '0 active contracts' : null,
+      isRealData: tablesStatus?.subscriptions || isINR,
+      emptyState: !tablesStatus?.subscriptions && !isINR ? 'Table pending migration' : metrics.activeSubscriptions === 0 ? '0 active contracts' : null,
       emptyDesc: 'Subscription billing engine table will be connected in Module 4',
     },
     {
       id: 'monthly-revenue',
       label: 'Monthly Revenue',
       value: loading ? '...' : metrics.monthlyRevenue,
-      formattedValue: loading ? '...' : formatCurrency(metrics.monthlyRevenue),
-      timeframe: tablesStatus.invoices || tablesStatus.payments ? 'Gross recurring MRR' : 'No revenue recorded',
-      icon: DollarSign,
+      formattedValue: loading ? '...' : formatCurrency(metrics.monthlyRevenue, currencyCode),
+      timeframe: tablesStatus?.invoices || tablesStatus?.payments || isINR ? 'Gross recurring MRR' : 'No revenue recorded',
+      icon: isINR ? IndianRupee : DollarSign,
       path: '/invoices',
       colorStyle: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-      isRealData: tablesStatus.invoices || tablesStatus.payments,
-      emptyState: metrics.monthlyRevenue === 0 ? '$0.00 collected' : null,
+      isRealData: tablesStatus?.invoices || tablesStatus?.payments || isINR,
+      emptyState: metrics.monthlyRevenue === 0 ? (isINR ? '₹0 collected' : '$0.00 collected') : null,
       emptyDesc: 'Revenue metrics calculate live once paid invoices exist',
     },
     {

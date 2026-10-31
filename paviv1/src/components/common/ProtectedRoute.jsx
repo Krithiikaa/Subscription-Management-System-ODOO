@@ -1,10 +1,12 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useDemoMode } from '../../context/DemoModeContext';
 import { ShieldAlert } from 'lucide-react';
 
 export function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, profile, role, loading, isConfigured } = useAuth();
+  const { isDemoMode } = useDemoMode();
   const location = useLocation();
 
   if (loading) {
@@ -20,12 +22,17 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
     );
   }
 
+  // In Demo Mode, permit seamless inspection of all 9 sections without polluting Supabase Auth
+  if (isDemoMode) {
+    return children;
+  }
+
   // If Supabase is not yet configured, allow navigation with preview context
   if (!isConfigured) {
     return children;
   }
 
-  // Not logged in -> redirect to login with return url
+  // Live Database Mode: Require active Supabase GoTrue session
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
