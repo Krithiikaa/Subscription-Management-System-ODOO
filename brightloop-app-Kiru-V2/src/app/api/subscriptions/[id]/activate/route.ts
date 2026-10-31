@@ -6,6 +6,7 @@ import { requireApiRole } from "@/lib/api-auth";
 import { staffCanAccessAllProducts } from "@/lib/staff-access";
 import { isValidTransition } from "@/lib/subscription-lifecycle";
 import { logAudit } from "@/lib/audit";
+import { syncEntitlementsForSubscription } from "@/lib/entitlements";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireApiRole("ADMIN", "STAFF");
@@ -31,6 +32,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const updated = await db.transaction(async (tx) => {
     const [row] = await tx.update(subscriptions).set({ status: "ACTIVE", updatedAt: new Date() }).where(eq(subscriptions.id, subscriptionId)).returning();
     await logAudit(tx, { userId: session.userId, action: "STATUS_CHANGED", entityType: "subscription", entityId: subscriptionId, oldValues: { status: subscription.status }, newValues: { status: "ACTIVE" } });
+    await syncEntitlementsForSubscription(tx, subscriptionId, subscription.customerId, "ACTIVE");
     return row;
   });
 

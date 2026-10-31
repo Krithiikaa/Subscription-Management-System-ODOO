@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { BrightloopLogo } from "@/components/brand/brightloop-logo";
 import { LogoutButton } from "@/components/shared/logout-button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { PortalStats } from "@/components/portal/portal-stats";
 
 export default async function PortalPage() {
   const session = await getSession();
@@ -21,6 +22,8 @@ export default async function PortalPage() {
       <h1 className="font-serif" style={{ fontSize: "var(--text-2xl)", fontWeight: 700, margin: "4px 0 24px" }}>
         Welcome, {session?.name}
       </h1>
+
+      <PortalStats />
 
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         <Link href="/portal/quotations" className="panel" style={{ padding: "24px", width: 220, textDecoration: "none", color: "inherit" }}>

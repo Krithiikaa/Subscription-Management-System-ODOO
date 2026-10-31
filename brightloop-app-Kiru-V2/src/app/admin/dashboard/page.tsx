@@ -1,8 +1,9 @@
-import Link from "next/link";
 import { getSession } from "@/lib/session";
+import { FinanceDashboard } from "@/components/admin/finance-dashboard";
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
+  const role = session?.role === "ADMIN" ? "ADMIN" : "STAFF";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -12,18 +13,7 @@ export default async function AdminDashboardPage() {
           {session?.name}
         </h2>
       </div>
-
-      <div className="panel" style={{ padding: 24, maxWidth: 480 }}>
-        <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
-          Phase 1 — authentication only. Revenue, subscriptions, invoices and payment
-          metrics appear here once the catalog, billing and reporting phases are built.
-        </p>
-        {session?.role === "ADMIN" && (
-          <Link href="/admin/staff" className="btn-primary" style={{ marginTop: 16, display: "inline-flex" }}>
-            Manage staff →
-          </Link>
-        )}
-      </div>
+      <FinanceDashboard role={role} />
     </div>
   );
 }

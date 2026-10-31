@@ -7,6 +7,7 @@ import { staffCanAccessAllProducts } from "@/lib/staff-access";
 import { isValidTransition, loadPlanPermissionsForSubscription, planPermissionsAllow } from "@/lib/subscription-lifecycle";
 import { pauseSubscriptionSchema } from "@/lib/validation";
 import { logAudit } from "@/lib/audit";
+import { syncEntitlementsForSubscription } from "@/lib/entitlements";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireApiRole("ADMIN", "STAFF");
@@ -45,6 +46,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .where(eq(subscriptions.id, subscriptionId))
       .returning();
     await logAudit(tx, { userId: session.userId, action: "STATUS_CHANGED", entityType: "subscription", entityId: subscriptionId, oldValues: { status: subscription.status }, newValues: { status: "PAUSED", reason: parsed.data.reason } });
+    await syncEntitlementsForSubscription(tx, subscriptionId, subscription.customerId, "PAUSED");
     return row;
   });
 

@@ -7,6 +7,7 @@ import { staffCanAccessAllProducts } from "@/lib/staff-access";
 import { isValidTransition, loadPlanPermissionsForSubscription, planPermissionsAllow } from "@/lib/subscription-lifecycle";
 import { closeSubscriptionSchema } from "@/lib/validation";
 import { logAudit } from "@/lib/audit";
+import { syncEntitlementsForSubscription } from "@/lib/entitlements";
 
 // Closing an ACTIVE/PAUSED subscription is an "early closure" and requires
 // the plan's closable permission. Closing a DRAFT/QUOTATION/CONFIRMED
@@ -53,6 +54,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .where(eq(subscriptions.id, subscriptionId))
       .returning();
     await logAudit(tx, { userId: session.userId, action: "STATUS_CHANGED", entityType: "subscription", entityId: subscriptionId, oldValues: { status: subscription.status }, newValues: { status: "CLOSED", reason: parsed.data.reason } });
+    await syncEntitlementsForSubscription(tx, subscriptionId, subscription.customerId, "CLOSED");
     return row;
   });
 
