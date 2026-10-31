@@ -31,7 +31,7 @@ export function TopBar({
     { label: "Customers", href: "/admin/customers" },
     { label: "Products", href: "/admin/products" },
     { label: "Plans", href: "/admin/plans" },
-    { label: "Discounts", href: "/admin/discounts" },
+    { label: "About", href: "/about" },
   ];
 
   const staffNav = [
@@ -40,12 +40,14 @@ export function TopBar({
     { label: "Subscriptions", href: "/staff/subscriptions" },
     { label: "Invoices", href: "/staff/invoices" },
     { label: "Payments", href: "/staff/payments" },
+    { label: "About", href: "/about" },
   ];
 
   const customerNav = [
     { label: "My Subscriptions", href: "/portal/subscriptions" },
     { label: "My Invoices", href: "/portal/invoices" },
     { label: "My Profile", href: "/portal/profile" },
+    { label: "About", href: "/about" },
   ];
 
   const navItems = role === "ADMIN" ? adminNav : role === "STAFF" ? staffNav : customerNav;
