@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/billing",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "functions": {
+    "src/app/api/cron/billing/route.ts": { "maxDuration": 300 },
+    "src/app/api/billing/run/route.ts":  { "maxDuration": 300 }
+  }
+}
