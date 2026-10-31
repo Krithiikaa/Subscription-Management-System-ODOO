@@ -9,13 +9,13 @@ import {
 import { Card, CardHeader, CardContent } from '../common/Card';
 import { SUBSCRIPTION_STATUS_DATA } from '../../lib/mockData';
 import { formatNumber } from '../../lib/utils';
-import { PieChart as PieIcon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 function StatusTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-slate-900 text-white p-2.5 rounded-lg shadow-xl border border-slate-700 text-xs">
+      <div className="bg-stone-900 dark:bg-stone-800 text-white p-2.5 rounded-lg shadow-xl border border-stone-700 text-xs font-sans">
         <div className="flex items-center gap-2">
           <span
             className="w-2.5 h-2.5 rounded-full"
@@ -23,7 +23,7 @@ function StatusTooltip({ active, payload }) {
           />
           <span className="font-semibold">{data.name}</span>
         </div>
-        <div className="mt-1 flex items-baseline justify-between gap-4 text-slate-300">
+        <div className="mt-1 flex items-baseline justify-between gap-4 text-stone-300">
           <span>{formatNumber(data.value)} subscriptions</span>
           <span className="text-white font-bold">{data.percentage}%</span>
         </div>
@@ -34,15 +34,16 @@ function StatusTooltip({ active, payload }) {
 }
 
 export function SubscriptionStatusChart() {
+  const { isDark } = useTheme();
   const total = SUBSCRIPTION_STATUS_DATA.reduce((acc, curr) => acc + curr.value, 0);
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader
-        title="Subscription Status"
-        subtitle="Distribution of accounts across contract states"
+        title="Subscription Overview"
+        subtitle="Distribution across contract lifecycle states"
         action={
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
             {formatNumber(total)} Total
           </span>
         }
@@ -66,7 +67,7 @@ export function SubscriptionStatusChart() {
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
-                    stroke="#ffffff"
+                    stroke={isDark ? '#181b22' : '#ffffff'}
                     strokeWidth={2}
                   />
                 ))}
@@ -76,30 +77,34 @@ export function SubscriptionStatusChart() {
 
           {/* Center Callout */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-2xl font-bold text-slate-900 tracking-tight">89.9%</span>
-            <span className="text-[11px] font-medium text-slate-400">Retention</span>
+            <span className="text-2xl font-bold text-stone-900 dark:text-white tracking-tight font-sans">
+              89.9%
+            </span>
+            <span className="text-[11px] font-medium text-stone-400 dark:text-stone-500">
+              Active Rate
+            </span>
           </div>
         </div>
 
         {/* Custom Status Legend */}
-        <div className="mt-2 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+        <div className="mt-2 pt-3 border-t border-stone-100 dark:border-stone-800/80 grid grid-cols-2 gap-2 text-xs font-sans">
           {SUBSCRIPTION_STATUS_DATA.map((item) => (
             <div
               key={item.name}
-              className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50/70 border border-slate-100"
+              className="flex items-center justify-between p-1.5 rounded-lg bg-stone-50/70 dark:bg-stone-900/60 border border-stone-100 dark:border-stone-800"
             >
               <div className="flex items-center gap-1.5 truncate">
                 <span
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-slate-600 truncate text-[11px] font-medium">
+                <span className="text-stone-600 dark:text-stone-400 truncate text-[11px] font-medium">
                   {item.name}
                 </span>
               </div>
-              <div className="flex items-center gap-1 shrink-0 font-semibold text-slate-800 text-[11px]">
+              <div className="flex items-center gap-1 shrink-0 font-semibold text-stone-800 dark:text-stone-200 text-[11px]">
                 <span>{item.value}</span>
-                <span className="text-[10px] text-slate-400 font-normal">
+                <span className="text-[10px] text-stone-400 dark:text-stone-500 font-normal">
                   ({item.percentage}%)
                 </span>
               </div>

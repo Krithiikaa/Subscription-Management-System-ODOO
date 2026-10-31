@@ -87,10 +87,17 @@ export const MONTHLY_REVENUE_DATA = [
 
 export const SUBSCRIPTION_STATUS_DATA = [
   { name: 'Active', value: 1284, color: '#10B981', percentage: 76.8 },
-  { name: 'In Trial', value: 124, color: '#3B82F6', percentage: 7.4 },
-  { name: 'Past Due', value: 48, color: '#F59E0B', percentage: 2.9 },
-  { name: 'Paused', value: 36, color: '#8B5CF6', percentage: 2.2 },
+  { name: 'In Trial', value: 124, color: '#F59E0B', percentage: 7.4 },
+  { name: 'Past Due', value: 48, color: '#F97316', percentage: 2.9 },
+  { name: 'Paused', value: 36, color: '#A855F7', percentage: 2.2 },
   { name: 'Canceled', value: 178, color: '#EF4444', percentage: 10.7 },
+];
+
+export const INVOICE_STATUS_BREAKDOWN_DATA = [
+  { status: 'Paid', count: 184, amount: 165540, color: '#10B981' },
+  { status: 'Pending', count: 18, amount: 14820, color: '#F59E0B' },
+  { status: 'Overdue', count: 7, amount: 4290, color: '#EF4444' },
+  { status: 'Draft', count: 12, amount: 9800, color: '#71717A' },
 ];
 
 export const RECENT_SUBSCRIPTIONS = [
@@ -99,7 +106,7 @@ export const RECENT_SUBSCRIPTIONS = [
     customer: {
       name: 'Acme Corporation',
       email: 'billing@acmecorp.com',
-      avatarColor: 'bg-indigo-600',
+      avatarColor: 'bg-amber-500 text-stone-950',
     },
     plan: 'Enterprise Cloud Plus',
     billingCycle: 'Annual',
@@ -113,7 +120,7 @@ export const RECENT_SUBSCRIPTIONS = [
     customer: {
       name: 'Nexus Dynamics Ltd',
       email: 'finance@nexusdyn.io',
-      avatarColor: 'bg-emerald-600',
+      avatarColor: 'bg-stone-800 text-amber-300',
     },
     plan: 'Growth Scale Tier',
     billingCycle: 'Monthly',
@@ -127,7 +134,7 @@ export const RECENT_SUBSCRIPTIONS = [
     customer: {
       name: 'CyberVault Security',
       email: 'ops@cybervault.net',
-      avatarColor: 'bg-cyan-600',
+      avatarColor: 'bg-emerald-600 text-white',
     },
     plan: 'Enterprise Core',
     billingCycle: 'Annual',
@@ -141,7 +148,7 @@ export const RECENT_SUBSCRIPTIONS = [
     customer: {
       name: 'Apex Global Logistics',
       email: 'accounts@apexgl.com',
-      avatarColor: 'bg-amber-600',
+      avatarColor: 'bg-rose-600 text-white',
     },
     plan: 'Starter Pro',
     billingCycle: 'Monthly',
@@ -155,7 +162,7 @@ export const RECENT_SUBSCRIPTIONS = [
     customer: {
       name: 'Luminary Media Group',
       email: 'billing@luminary.co',
-      avatarColor: 'bg-purple-600',
+      avatarColor: 'bg-amber-600 text-white',
     },
     plan: 'Business Fleet',
     billingCycle: 'Annual',
@@ -169,7 +176,7 @@ export const RECENT_SUBSCRIPTIONS = [
     customer: {
       name: 'Vanguard AI Systems',
       email: 'procurement@vanguardai.com',
-      avatarColor: 'bg-blue-600',
+      avatarColor: 'bg-stone-700 text-white',
     },
     plan: 'Enterprise Unlimited',
     billingCycle: 'Monthly',
@@ -339,6 +346,18 @@ export const MODULE_CONFIGS = {
       { label: 'Settlement Time', value: 'T+2 days' },
     ],
     features: ['Multi-gateway intelligent routing', 'Smart retry logic for failed cards', 'Refund & partial capture management', 'PCI-DSS compliance'],
+  },
+  portal: {
+    title: 'Customer Portal',
+    singular: 'Portal Account',
+    description: 'Self-service customer portal where tenants manage active subscriptions, view billing statements, download invoices, and update payment cards.',
+    icon: 'Globe',
+    stats: [
+      { label: 'Portal Users', value: '742' },
+      { label: 'Self-Serve Rate', value: '82%' },
+      { label: 'Payment Updates', value: '49' },
+    ],
+    features: ['Instant card / bank account updates', 'One-click PDF invoice downloads', 'Subscription tier upgrade/downgrade requests', 'Custom corporate domain branding'],
   },
   settings: {
     title: 'Settings',

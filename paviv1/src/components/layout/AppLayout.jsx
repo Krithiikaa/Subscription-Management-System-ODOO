@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import { AlertCircle } from 'lucide-react';
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-stone-50/60 dark:bg-[#0c0e12] flex transition-colors duration-200 font-sans">
       {/* Sidebar Navigation */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -17,16 +16,16 @@ export function AppLayout() {
         {/* Top Navigation */}
         <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
 
-        {/* Global Demo Status Banner */}
-        <div className="bg-indigo-50/80 border-b border-indigo-100/80 px-4 sm:px-6 py-2 text-xs text-indigo-900 flex flex-wrap items-center justify-between gap-2">
+        {/* Global Demo Status Banner with Golden Yellow Palette */}
+        <div className="bg-amber-50/80 dark:bg-amber-950/30 border-b border-amber-200/70 dark:border-amber-900/40 px-4 sm:px-6 py-2 text-xs text-amber-950 dark:text-amber-200 flex flex-wrap items-center justify-between gap-2 transition-colors">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-            <span className="font-semibold">Enterprise Preview Mode:</span>
-            <span className="text-indigo-700">
-              Interactive demonstration dataset for Brightloop Subscription Management System (Module 1).
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="font-semibold">Brightloop Software Preview:</span>
+            <span className="text-amber-900 dark:text-amber-300">
+              Interactive demonstration dataset for Subscription Management System.
             </span>
           </div>
-          <span className="text-[11px] font-mono text-indigo-600 bg-white/80 px-2 py-0.5 rounded border border-indigo-200">
+          <span className="text-[10px] font-mono text-amber-800 dark:text-amber-300 bg-white/90 dark:bg-stone-900 px-2 py-0.5 rounded border border-amber-300/60 dark:border-amber-800">
             Tenant: brightloop-corp-global
           </span>
         </div>
@@ -37,16 +36,16 @@ export function AppLayout() {
         </main>
 
         {/* Enterprise Footer */}
-        <footer className="border-t border-slate-200 bg-white py-4 px-6 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <footer className="border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-[#12151b] py-4 px-6 text-xs text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-2 transition-colors">
           <div>
-            &copy; 2026 <strong className="text-slate-700">Brightloop</strong> Inc. All rights reserved. Subscription Management System v3.4.
+            &copy; 2026 <strong className="text-stone-900 dark:text-stone-200">Brightloop Software</strong> Inc. All rights reserved.
           </div>
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <span>SaaS Architecture</span>
+          <div className="flex items-center gap-4 text-xs">
+            <span>Enterprise Billing OS</span>
             <span>&bull;</span>
-            <span>Module 1 Complete</span>
+            <span className="text-amber-600 dark:text-amber-400 font-medium">Module 1 Final</span>
             <span>&bull;</span>
-            <span>GDPR & SOC2 Ready</span>
+            <span>SOC2 & GDPR Compliant</span>
           </div>
         </footer>
       </div>

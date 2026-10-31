@@ -6,24 +6,30 @@ export function StatusPill({ status, className }) {
 
   const normalized = status.toLowerCase();
 
-  let styles = 'bg-slate-100 text-slate-700 border-slate-200';
-  let dotColor = 'bg-slate-400';
+  let styles =
+    'bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700';
+  let dotColor = 'bg-stone-400 dark:bg-stone-500';
 
   if (['active', 'paid', 'success', 'published', 'healthy'].includes(normalized)) {
-    styles = 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+    styles =
+      'bg-emerald-50 text-emerald-700 border-emerald-200/90 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60';
     dotColor = 'bg-emerald-500';
   } else if (['trial', 'trialling', 'pending', 'open', 'processing'].includes(normalized)) {
-    styles = 'bg-blue-50 text-blue-700 border-blue-200/80';
-    dotColor = 'bg-blue-500';
-  } else if (['past due', 'past_due', 'warning', 'expiring'].includes(normalized)) {
-    styles = 'bg-amber-50 text-amber-700 border-amber-200/80';
+    styles =
+      'bg-amber-50 text-amber-800 border-amber-200/90 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/60';
     dotColor = 'bg-amber-500';
+  } else if (['past due', 'past_due', 'warning', 'expiring'].includes(normalized)) {
+    styles =
+      'bg-orange-50 text-orange-800 border-orange-200/90 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/60';
+    dotColor = 'bg-orange-500';
   } else if (['overdue', 'canceled', 'cancelled', 'failed', 'critical'].includes(normalized)) {
-    styles = 'bg-rose-50 text-rose-700 border-rose-200/80';
+    styles =
+      'bg-rose-50 text-rose-700 border-rose-200/90 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/60';
     dotColor = 'bg-rose-500';
   } else if (['paused', 'archived', 'draft'].includes(normalized)) {
-    styles = 'bg-purple-50 text-purple-700 border-purple-200/80';
-    dotColor = 'bg-purple-500';
+    styles =
+      'bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-800/60 dark:text-stone-400 dark:border-stone-700';
+    dotColor = 'bg-stone-400';
   }
 
   return (

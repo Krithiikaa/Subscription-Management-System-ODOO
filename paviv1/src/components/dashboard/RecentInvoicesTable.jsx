@@ -15,7 +15,7 @@ export function RecentInvoicesTable() {
         action={
           <Link
             to="/invoices"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+            className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 flex items-center gap-1 transition-colors font-sans"
           >
             All Invoices ({RECENT_INVOICES.length}) <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -23,9 +23,9 @@ export function RecentInvoicesTable() {
       />
 
       <CardContent className="p-0 overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse font-sans">
           <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <tr className="bg-stone-50/80 dark:bg-stone-900/80 border-b border-stone-200/80 dark:border-stone-800 text-[11px] font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
               <th className="py-3 px-4 sm:px-6">Invoice #</th>
               <th className="py-3 px-4">Client</th>
               <th className="py-3 px-4">Amount</th>
@@ -35,42 +35,47 @@ export function RecentInvoicesTable() {
               <th className="py-3 px-4 text-right">PDF</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-xs">
+          <tbody className="divide-y divide-stone-100 dark:divide-stone-800/80 text-xs">
             {RECENT_INVOICES.map((inv) => (
-              <tr key={inv.id} className="hover:bg-slate-50/60 transition-colors group">
-                <td className="py-3 px-4 sm:px-6 font-mono font-medium text-indigo-600">
+              <tr
+                key={inv.id}
+                className="hover:bg-amber-50/30 dark:hover:bg-stone-800/40 transition-colors group"
+              >
+                <td className="py-3.5 px-4 sm:px-6 font-mono font-medium text-stone-900 dark:text-amber-400">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600" />
+                    <FileText className="w-3.5 h-3.5 text-stone-400 group-hover:text-amber-600" />
                     <span>{inv.id}</span>
                   </div>
                 </td>
 
-                <td className="py-3 px-4">
-                  <p className="font-semibold text-slate-900">{inv.customer}</p>
-                  <p className="text-[11px] text-slate-400">{inv.email}</p>
+                <td className="py-3.5 px-4">
+                  <p className="font-semibold text-stone-900 dark:text-white">{inv.customer}</p>
+                  <p className="text-[11px] text-stone-400 dark:text-stone-500">{inv.email}</p>
                 </td>
 
-                <td className="py-3 px-4 font-bold text-slate-900">
+                <td className="py-3.5 px-4 font-bold text-stone-900 dark:text-white">
                   {formatCurrency(inv.amount)}
                 </td>
 
-                <td className="py-3 px-4">
+                <td className="py-3.5 px-4">
                   <StatusPill status={inv.status} />
                 </td>
 
-                <td className="py-3 px-4 text-slate-600">
+                <td className="py-3.5 px-4 text-stone-600 dark:text-stone-300">
                   <p className="text-xs">{formatDate(inv.dueDate)}</p>
-                  <p className="text-[10px] text-slate-400">Issued {formatDate(inv.issueDate)}</p>
+                  <p className="text-[10px] text-stone-400 dark:text-stone-500">
+                    Issued {formatDate(inv.issueDate)}
+                  </p>
                 </td>
 
-                <td className="py-3 px-4 text-slate-500 text-[11px]">
+                <td className="py-3.5 px-4 text-stone-500 dark:text-stone-400 text-[11px]">
                   {inv.method}
                 </td>
 
-                <td className="py-3 px-4 text-right">
+                <td className="py-3.5 px-4 text-right">
                   <button
                     onClick={() => alert(`Downloading demo PDF receipt for ${inv.id}`)}
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-stone-400 dark:text-stone-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
                     title="Download Statement"
                   >
                     <DownloadCloud className="w-3.5 h-3.5" />
@@ -83,10 +88,13 @@ export function RecentInvoicesTable() {
       </CardContent>
 
       <CardFooter>
-        <span className="text-xs text-slate-500">
-          Automated payment collection & reconciliation active &bull; Brightloop Billing
+        <span className="text-xs text-stone-500 dark:text-stone-400">
+          Automated collection engine active &bull; Brightloop Software Billing
         </span>
-        <Link to="/invoices" className="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+        <Link
+          to="/invoices"
+          className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
+        >
           Invoicing Center &rarr;
         </Link>
       </CardFooter>

@@ -10,6 +10,7 @@ import { QuotationsPage } from '../pages/QuotationsPage';
 import { InvoicesPage } from '../pages/InvoicesPage';
 import { DiscountsPage } from '../pages/DiscountsPage';
 import { PaymentsPage } from '../pages/PaymentsPage';
+import { CustomerPortalPage } from '../pages/CustomerPortalPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
 export function AppRoutes() {
@@ -26,6 +27,8 @@ export function AppRoutes() {
         <Route path="/invoices" element={<InvoicesPage />} />
         <Route path="/discounts" element={<DiscountsPage />} />
         <Route path="/payments" element={<PaymentsPage />} />
+        <Route path="/portal" element={<CustomerPortalPage />} />
+        <Route path="/customer-portal" element={<CustomerPortalPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />

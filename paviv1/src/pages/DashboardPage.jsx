@@ -2,6 +2,7 @@ import React from 'react';
 import { KpiGrid } from '../components/dashboard/KpiGrid';
 import { RevenueChart } from '../components/dashboard/RevenueChart';
 import { SubscriptionStatusChart } from '../components/dashboard/SubscriptionStatusChart';
+import { InvoiceStatusBreakdownChart } from '../components/dashboard/InvoiceStatusBreakdownChart';
 import { RecentSubscriptionsTable } from '../components/dashboard/RecentSubscriptionsTable';
 import { RecentInvoicesTable } from '../components/dashboard/RecentInvoicesTable';
 import { Button } from '../components/common/Button';
@@ -9,11 +10,8 @@ import { Badge } from '../components/common/Badge';
 import {
   Download,
   Plus,
-  RefreshCw,
-  Sparkles,
   Calendar,
-  Layers,
-  ArrowUpRight,
+  Sparkles,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -28,28 +26,30 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Dashboard Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/60">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-stone-200/80 dark:border-stone-800">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+          <div className="flex items-center gap-2 mb-1.5 font-sans">
+            <span className="text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-md flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               Brightloop Cloud
             </span>
-            <span className="text-xs text-slate-400">&bull;</span>
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-xs text-stone-300 dark:text-stone-700">&bull;</span>
+            <span className="text-xs text-stone-500 dark:text-stone-400 flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-stone-400" />
               {today}
             </span>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-white font-serif">
             Subscription & Revenue Overview
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time tracking of active subscriptions, enterprise plans, cash collection, and billing health.
+          <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 font-sans">
+            Real-time analytics for active contracts, MRR growth, receivables collection, and billing health.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -75,7 +75,7 @@ export function DashboardPage() {
         <KpiGrid />
       </section>
 
-      {/* Charts Section: Monthly Revenue & Subscription Status */}
+      {/* Charts Section: Revenue Trend & Subscription Overview */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <RevenueChart />
@@ -83,6 +83,11 @@ export function DashboardPage() {
         <div className="lg:col-span-1">
           <SubscriptionStatusChart />
         </div>
+      </section>
+
+      {/* 3rd Chart Section: Invoice Status Breakdown */}
+      <section>
+        <InvoiceStatusBreakdownChart />
       </section>
 
       {/* Tables Section: Recent Subscriptions & Recent Invoices */}
