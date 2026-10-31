@@ -77,6 +77,19 @@ Per your explicit design directive (superseding Phase 0's original dark-terminal
 
 **Scope note:** most "modules" in your redesign brief (catalog, subscriptions, invoices, payments, product-wise staff assignment) don't exist in code yet — only Phase 0 (scaffold) and Phase 1 (auth) are built. Those pages will inherit these tokens automatically when built in Phases 2–6; there was nothing to redesign for them yet.
 
+## Brand Logo Integration (✅ Complete)
+
+You supplied a proper asset set (`public/brightloop-icon-{256,512,1024}.png`, `favicon.ico`, `apple-touch-icon.png`) — confirmed via PIL that the PNGs have real alpha transparency (corner pixel `(0,0,0,0)`), so the golden glow reads correctly on both light and dark backgrounds without a black box.
+
+- Built a reusable `BrightloopLogo` component (`full` / `compact` / `symbol` variants, configurable size and colors) — single source of truth, no more duplicated inline SVG/logo markup.
+- Wired it into `AuthShell` (login/signup/forgot/reset), `AdminShell` sidebar, and the customer portal header.
+- Replaced the stale default Next.js `favicon.ico` and wired `apple-touch-icon.png` into `layout.tsx` metadata.
+- Removed the unused leftover Geist font files from the original scaffold (never referenced in our CSS).
+
+## Root Redirect Fix
+
+`/` now redirects straight to `/login` (per your request — judges shouldn't land on a marketing page first). Implemented in `middleware.ts`, not as a page-level `redirect()` call — found during testing that an unconditional `redirect()` in a statically-optimized page doesn't reliably emit an HTTP `Location` header under `next start` in this Next.js version (confirmed via `curl -v`: 307 status but no `location:` header at all). Middleware-based redirects don't have this problem (verified: proper `location: /login` header).
+
 ## Not Yet Done (Phases 2–7)
 
 | Phase | Scope |

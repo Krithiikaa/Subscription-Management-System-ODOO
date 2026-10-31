@@ -1,15 +1,10 @@
-import Image from "next/image";
+import { BrightloopLogo } from "@/components/brand/brightloop-logo";
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="auth-shell">
       <div className="auth-brand-panel">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Image src="/brightloop-logo.png" alt="" width={36} height={36} style={{ borderRadius: 8 }} />
-          <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.125rem", color: "#FFFFFF" }}>
-            Brightloop
-          </span>
-        </div>
+        <BrightloopLogo variant="full" size={40} wordmarkColor="#FFFFFF" descriptorColor="rgba(255,255,255,0.5)" />
 
         <div>
           <h1 className="auth-brand-headline">

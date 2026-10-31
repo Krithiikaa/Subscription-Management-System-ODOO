@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrightloopLogo } from "@/components/brand/brightloop-logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ReducedMotionToggle } from "@/components/shared/reduced-motion-toggle";
 import { LogoutButton } from "@/components/shared/logout-button";
@@ -28,21 +29,7 @@ const STAFF_ICON = (
 function BrandMark() {
   return (
     <div className="app-sidebar-brand">
-      <div
-        style={{
-          width: 28, height: 28, borderRadius: 7,
-          background: "var(--accent)", color: "var(--accent-contrast)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M8 12c-2.5 0-4-2-4-4s1.5-4 4-4 4 2 4 4-1.5 4-4 4z" />
-          <path d="M16 12c2.5 0 4 2 4 4s-1.5 4-4 4-4-2-4-4 1.5-4 4-4z" />
-        </svg>
-      </div>
-      <span style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "1.0625rem" }}>
-        Brightloop
-      </span>
+      <BrightloopLogo variant="full" size={30} />
     </div>
   );
 }

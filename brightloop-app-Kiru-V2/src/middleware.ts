@@ -14,9 +14,12 @@ const STAFF_ROUTES = ["/admin"];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   // Allow public routes and Next.js internals
   if (
-    pathname === "/" ||
     PUBLIC_ROUTES.some((r) => pathname.startsWith(r)) ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/cron") // protected by CRON_SECRET inside the route
