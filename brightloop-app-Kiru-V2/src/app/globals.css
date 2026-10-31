@@ -239,7 +239,16 @@ body {
 }
 
 /* ─── Auth Shell: split brand panel + form ───────────────────────────────── */
-.auth-shell { display: flex; min-height: 100dvh; }
+/* Fixed light look regardless of the site theme toggle or OS preference —
+   the auth split-screen always pairs a dark brand panel with a light form
+   panel, independent of dark mode. */
+.auth-shell {
+  display: flex; min-height: 100dvh;
+  --bg: #FBF9F5; --panel: #FFFFFF; --hairline: #EAE6DF; --table-header: #F4EFE6;
+  --text: #181B20; --text-muted: #5C6470;
+  --accent: #E5A50A; --accent-hover: #F5BE38; --accent-contrast: #181B20;
+  --warning: #E5A50A; --danger: #EF4444; --success: #10B981;
+}
 .auth-brand-panel {
   flex: 1; color: #FFFFFF; padding: 44px;
   display: flex; flex-direction: column; justify-content: space-between;
