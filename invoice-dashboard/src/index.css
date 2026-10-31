@@ -1,0 +1,130 @@
+/* ==========================================================================
+   ARCHANA V4 — INVOICE GENERATION DASHBOARD
+   Design System & Tokens: White and Beige Executive Palette
+   ========================================================================== */
+
+:root {
+  /* Color Palette - White & Warm Beige */
+  --bg-app: #F8F6F0;
+  --bg-canvas: #FAF8F5;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F3EFE6;
+  --bg-subtle-hover: #ECE6DA;
+  --bg-active: #E6DECE;
+  --bg-dark: #231F1D;
+
+  /* Borders */
+  --border-subtle: #EAE4D8;
+  --border-light: #F0EBE2;
+  --border-medium: #DCD3C3;
+  --border-focus: #B59368;
+
+  /* Typography Colors */
+  --text-main: #27221E;
+  --text-secondary: #6B6258;
+  --text-muted: #968B7D;
+  --text-inverse: #FAF8F5;
+
+  /* Accents & Brand */
+  --accent-espresso: #2C2622;
+  --accent-caramel: #A87D52;
+  --accent-caramel-hover: #926941;
+  --accent-caramel-light: #F7EFE4;
+  --accent-sand: #DFCBB5;
+  --accent-sand-soft: #F9F5EE;
+
+  /* Status Tokens */
+  --status-paid-bg: #EEF6F0;
+  --status-paid-text: #226743;
+  --status-paid-border: #C8E5CF;
+  --status-paid-dot: #34A853;
+
+  --status-draft-bg: #F5F1E8;
+  --status-draft-text: #78644E;
+  --status-draft-border: #E4D8C7;
+  --status-draft-dot: #B89B7A;
+
+  --status-overdue-bg: #FDF1ED;
+  --status-overdue-text: #AB3B2B;
+  --status-overdue-border: #F7CAC2;
+  --status-overdue-dot: #E0523D;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(40, 32, 24, 0.04);
+  --shadow-sm: 0 2px 6px rgba(40, 32, 24, 0.05), 0 1px 2px rgba(40, 32, 24, 0.03);
+  --shadow-md: 0 4px 14px rgba(40, 32, 24, 0.06), 0 2px 4px rgba(40, 32, 24, 0.04);
+  --shadow-lg: 0 12px 28px -6px rgba(40, 32, 24, 0.08), 0 4px 8px -2px rgba(40, 32, 24, 0.04);
+  --shadow-modal: 0 24px 60px -12px rgba(35, 27, 20, 0.25), 0 12px 24px -6px rgba(35, 27, 20, 0.12);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout sizing */
+  --sidebar-width: 260px;
+  --header-height: 70px;
+}
+
+/* CSS Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-main);
+  background-color: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-sand);
+}
