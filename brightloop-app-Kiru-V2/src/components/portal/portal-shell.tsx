@@ -37,6 +37,9 @@ import {
   Sparkles,
   RefreshCw,
   Loader2,
+  Menu,
+  X,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -60,6 +63,7 @@ export function PortalShell({ initialData }: Props) {
   const [data, setData] = useState<PortalDashboardData | null>(initialData || null);
   const [loading, setLoading] = useState(!initialData);
   const [activeTab, setActiveTab] = useState<PortalTabId>("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Selected drawers / modals
   const [selectedInvoice, setSelectedInvoice] = useState<PortalInvoice | null>(null);
@@ -113,7 +117,7 @@ export function PortalShell({ initialData }: Props) {
       <main style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", color: "var(--text-muted)" }}>
           <Loader2 size={32} className="animate-spin" style={{ margin: "0 auto 12px" }} />
-          <p style={{ fontSize: "var(--text-sm)" }}>Loading your customer workspace...</p>
+          <p style={{ fontSize: "var(--text-sm)" }}>Loading your workspace...</p>
         </div>
       </main>
     );
@@ -122,6 +126,7 @@ export function PortalShell({ initialData }: Props) {
   const { customer, metrics, subscriptions, invoices, payments } = data;
   const unpaidCount = invoices.filter((i: PortalInvoice) => parseFloat(i.balanceDue) > 0.01).length;
   const pendingQuotationsCount = subscriptions.filter((s) => s.status === "QUOTATION").length;
+  const notifCount = unpaidCount + pendingQuotationsCount;
 
   const NAV_ITEMS: Array<{
     id: PortalTabId;
@@ -129,284 +134,375 @@ export function PortalShell({ initialData }: Props) {
     icon: LucideIcon;
     badge?: number;
     badgeDanger?: boolean;
+    section?: string;
   }> = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "catalogue", label: "Explore Software", icon: Compass },
-    {
-      id: "quotations",
-      label: "My Quotations",
-      icon: FileSpreadsheet,
-      badge: pendingQuotationsCount > 0 ? pendingQuotationsCount : undefined,
-    },
-    {
-      id: "subscriptions",
-      label: "My Subscriptions",
-      icon: Layers,
-      badge: subscriptions.length > 0 ? subscriptions.length : undefined,
-    },
-    {
-      id: "invoices",
-      label: "Invoices",
-      icon: FileText,
-      badge: unpaidCount > 0 ? unpaidCount : undefined,
-      badgeDanger: unpaidCount > 0,
-    },
-    { id: "payments", label: "Payments", icon: CreditCard },
-    { id: "access", label: "Software Access", icon: Rocket },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "profile", label: "My Profile", icon: User },
-    { id: "support", label: "Support", icon: Headphones },
+    { id: "dashboard",      label: "Dashboard",        icon: LayoutDashboard, section: "MAIN" },
+    { id: "catalogue",      label: "Explore Software",  icon: Compass,         section: "MAIN" },
+    { id: "quotations",     label: "My Quotations",     icon: FileSpreadsheet, badge: pendingQuotationsCount > 0 ? pendingQuotationsCount : undefined, section: "BILLING" },
+    { id: "subscriptions",  label: "My Subscriptions",  icon: Layers,          badge: subscriptions.length > 0 ? subscriptions.length : undefined, section: "BILLING" },
+    { id: "invoices",       label: "Invoices",          icon: FileText,        badge: unpaidCount > 0 ? unpaidCount : undefined, badgeDanger: unpaidCount > 0, section: "BILLING" },
+    { id: "payments",       label: "Payments",          icon: CreditCard,      section: "BILLING" },
+    { id: "access",         label: "Software Access",   icon: Rocket,          section: "ACCESS" },
+    { id: "notifications",  label: "Notifications",     icon: Bell,            badge: notifCount > 0 ? notifCount : undefined, section: "ACCESS" },
+    { id: "profile",        label: "My Profile",        icon: User,            section: "ACCOUNT" },
+    { id: "support",        label: "Support",           icon: Headphones,      section: "ACCOUNT" },
   ];
 
+  const sections = [
+    { key: "MAIN",    label: "Overview" },
+    { key: "BILLING", label: "Billing" },
+    { key: "ACCESS",  label: "My Products" },
+    { key: "ACCOUNT", label: "Account" },
+  ];
+
+  const SIDEBAR_WIDTH = sidebarOpen ? 240 : 64;
+
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      {/* Top Navbar */}
-      <header
-        style={{
-          borderBottom: "1px solid var(--hairline)",
-          background: "var(--panel)",
-          position: "sticky",
-          top: 0,
-          zIndex: 30,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "12px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-          }}
+    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
+
+      {/* ── Top Navbar ─────────────────────────────────────────────────── */}
+      <header style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        height: 56,
+        borderBottom: "1px solid var(--hairline)",
+        background: "var(--panel)",
+        display: "flex",
+        alignItems: "center",
+        padding: "0 20px",
+        gap: 12,
+      }}>
+        {/* Hamburger */}
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((o) => !o)}
+          className="icon-btn"
+          style={{ width: 36, height: 36, flexShrink: 0 }}
+          title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <BrightloopLogo variant="compact" size={28} />
-            <div
-              style={{
-                height: 18,
-                width: 1,
-                background: "var(--hairline)",
-                display: "inline-block",
-              }}
-            />
-            <div>
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "var(--text-xs)",
-                  fontWeight: 600,
-                  color: "var(--text-muted)",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Customer Workspace
-              </span>
-              <span style={{ fontSize: "0.75rem", color: "var(--text)", marginLeft: 8, fontWeight: 600 }}>
-                • {customer.companyName || customer.name}
-              </span>
-            </div>
-          </div>
+          {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
+        </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {subscriptions.length === 0 && (
-              <button
-                type="button"
-                onClick={handleSeedDemo}
-                disabled={seeding}
-                className="btn-ghost"
-                style={{
-                  minHeight: 34,
-                  padding: "0 10px",
-                  fontSize: "var(--text-xs)",
-                  color: "var(--accent)",
-                  borderColor: "var(--accent)",
-                }}
-              >
-                <Sparkles size={14} />
-                {seeding ? "Seeding..." : "Load Demo Data"}
-              </button>
-            )}
+        <BrightloopLogo variant="compact" size={26} />
 
-            <button
-              type="button"
-              onClick={fetchDashboard}
-              disabled={refreshing}
-              className="icon-btn"
-              style={{ width: 34, height: 34 }}
-              title="Refresh Dashboard"
-            >
-              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-            </button>
+        <div style={{
+          height: 18, width: 1,
+          background: "var(--hairline)",
+          display: "inline-block",
+        }} />
 
-            <ThemeToggle />
-            <LogoutButton />
-          </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "var(--text-xs)",
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}>
+            Customer Portal
+          </span>
+          <span style={{ fontSize: "0.8rem", color: "var(--text)", marginLeft: 8, fontWeight: 600 }}>
+            • {customer.companyName || customer.name}
+          </span>
         </div>
 
-        {/* Navigation Tabs */}
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "0 20px",
-            display: "flex",
-            gap: 4,
-            overflowX: "auto",
-          }}
-        >
-          {NAV_ITEMS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "11px 12px",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: isActive ? "2px solid var(--accent)" : "2px solid transparent",
-                  color: isActive ? "var(--text)" : "var(--text-muted)",
-                  fontWeight: isActive ? 600 : 500,
-                  fontSize: "0.8125rem",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  transition: "all var(--transition-fast)",
-                }}
-              >
-                <Icon size={14} color={isActive ? "var(--accent)" : "currentColor"} />
-                <span>{tab.label}</span>
-                {tab.badge !== undefined && (
-                  <span
-                    style={{
-                      padding: "1px 5px",
-                      borderRadius: 999,
-                      fontSize: "0.625rem",
-                      fontWeight: 700,
-                      background: tab.badgeDanger ? "var(--danger)" : "var(--table-header)",
-                      color: tab.badgeDanger ? "#FFFFFF" : "var(--text-muted)",
-                    }}
-                  >
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        {/* Right actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {subscriptions.length === 0 && (
+            <button
+              type="button"
+              onClick={handleSeedDemo}
+              disabled={seeding}
+              className="btn-ghost"
+              style={{ minHeight: 32, padding: "0 10px", fontSize: "var(--text-xs)", color: "var(--accent)", borderColor: "var(--accent)" }}
+            >
+              <Sparkles size={13} />
+              {seeding ? "Seeding..." : "Load Demo Data"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={fetchDashboard}
+            disabled={refreshing}
+            className="icon-btn"
+            style={{ width: 34, height: 34 }}
+            title="Refresh"
+          >
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+          </button>
+          <ThemeToggle />
+          <LogoutButton />
         </div>
       </header>
 
-      {/* Main Body */}
-      <main
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          width: "100%",
-          padding: "24px 20px 48px",
+      {/* ── Body: Sidebar + Content ────────────────────────────────────── */}
+      <div style={{ display: "flex", paddingTop: 56, minHeight: "100dvh" }}>
+
+        {/* ── Sidebar ──────────────────────────────────────────────────── */}
+        <aside style={{
+          position: "fixed",
+          top: 56,
+          left: 0,
+          bottom: 0,
+          width: SIDEBAR_WIDTH,
+          background: "var(--panel)",
+          borderRight: "1px solid var(--hairline)",
+          overflowY: "auto",
+          overflowX: "hidden",
+          zIndex: 30,
+          transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
+          display: "flex",
+          flexDirection: "column",
+        }}>
+
+          {/* Customer info mini card */}
+          {sidebarOpen && (
+            <div style={{
+              margin: "16px 12px 8px",
+              padding: "12px",
+              borderRadius: "var(--radius)",
+              background: "color-mix(in srgb, var(--accent) 10%, var(--panel))",
+              border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
+            }}>
+              <div style={{
+                width: 36, height: 36,
+                borderRadius: "50%",
+                background: "var(--accent)",
+                color: "var(--accent-contrast)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 700, fontSize: "var(--text-sm)",
+                marginBottom: 8,
+              }}>
+                {(customer.companyName || customer.name || "C").charAt(0).toUpperCase()}
+              </div>
+              <div style={{ fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--text)", lineHeight: 1.3 }}>
+                {customer.companyName || customer.name}
+              </div>
+              <div style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginTop: 2 }}>
+                Customer Account
+              </div>
+            </div>
+          )}
+
+          {/* Nav sections */}
+          <nav style={{ flex: 1, padding: "8px 0" }}>
+            {sections.map((section) => {
+              const items = NAV_ITEMS.filter((n) => n.section === section.key);
+              return (
+                <div key={section.key} style={{ marginBottom: 4 }}>
+                  {sidebarOpen && (
+                    <div style={{
+                      padding: "10px 16px 4px",
+                      fontSize: "0.625rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--text-muted)",
+                      fontFamily: "var(--font-mono)",
+                    }}>
+                      {section.label}
+                    </div>
+                  )}
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setActiveTab(item.id)}
+                        title={!sidebarOpen ? item.label : undefined}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: sidebarOpen ? "9px 16px" : "9px 0",
+                          justifyContent: sidebarOpen ? "flex-start" : "center",
+                          background: isActive
+                            ? "color-mix(in srgb, var(--accent) 12%, var(--panel))"
+                            : "transparent",
+                          border: "none",
+                          borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
+                          borderRadius: 0,
+                          color: isActive ? "var(--accent)" : "var(--text-muted)",
+                          fontWeight: isActive ? 600 : 500,
+                          fontSize: "0.8125rem",
+                          cursor: "pointer",
+                          transition: "all 0.15s",
+                          textAlign: "left",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          position: "relative",
+                        }}
+                      >
+                        <Icon size={16} style={{ flexShrink: 0 }} />
+                        {sidebarOpen && (
+                          <>
+                            <span style={{ flex: 1 }}>{item.label}</span>
+                            {item.badge !== undefined && (
+                              <span style={{
+                                padding: "1px 6px",
+                                borderRadius: 999,
+                                fontSize: "0.625rem",
+                                fontWeight: 700,
+                                background: item.badgeDanger ? "var(--danger)" : "var(--table-header)",
+                                color: item.badgeDanger ? "#fff" : "var(--text-muted)",
+                                flexShrink: 0,
+                              }}>
+                                {item.badge}
+                              </span>
+                            )}
+                            {isActive && <ChevronRight size={13} style={{ flexShrink: 0, opacity: 0.5 }} />}
+                          </>
+                        )}
+                        {/* Badge dot when collapsed */}
+                        {!sidebarOpen && item.badge !== undefined && (
+                          <span style={{
+                            position: "absolute",
+                            top: 7, right: 10,
+                            width: 7, height: 7,
+                            borderRadius: "50%",
+                            background: item.badgeDanger ? "var(--danger)" : "var(--accent)",
+                          }} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Bottom: version tag */}
+          {sidebarOpen && (
+            <div style={{
+              padding: "12px 16px",
+              fontSize: "0.625rem",
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-mono)",
+              borderTop: "1px solid var(--hairline)",
+            }}>
+              Brightloop v2 • Customer Portal
+            </div>
+          )}
+        </aside>
+
+        {/* ── Main Content ─────────────────────────────────────────────── */}
+        <main style={{
           flex: 1,
-        }}
-      >
-        {activeTab === "dashboard" && (
-          <PortalOverview
-            data={data}
-            onSelectTab={(t) => {
-              if (t === "subscriptions") setActiveTab("subscriptions");
-              else if (t === "invoices") setActiveTab("invoices");
-              else setActiveTab("dashboard");
-            }}
-            onViewSubscription={(sub) => setSelectedSubscription(sub)}
-            onViewInvoice={(inv) => setSelectedInvoice(inv)}
-            onPayInvoice={(inv) => setPayingInvoice(inv)}
-            onSeedDemo={handleSeedDemo}
-            seeding={seeding}
-          />
-        )}
+          marginLeft: SIDEBAR_WIDTH,
+          transition: "margin-left 0.22s cubic-bezier(0.4,0,0.2,1)",
+          padding: "28px 32px 56px",
+          minWidth: 0,
+          maxWidth: "100%",
+        }}>
+          {/* Page heading */}
+          <div style={{ marginBottom: 24 }}>
+            <h1 style={{ fontSize: "var(--text-xl)", fontWeight: 700, margin: "0 0 4px", fontFamily: "var(--font-serif, inherit)" }}>
+              {NAV_ITEMS.find((n) => n.id === activeTab)?.label}
+            </h1>
+            <div style={{ height: 2, width: 32, background: "var(--accent)", borderRadius: 2 }} />
+          </div>
 
-        {activeTab === "catalogue" && (
-          <PortalCatalogue
-            onRequestQuoteSuccess={() => {
-              fetchDashboard();
-              setActiveTab("quotations");
-            }}
-          />
-        )}
+          {activeTab === "dashboard" && (
+            <PortalOverview
+              data={data}
+              onSelectTab={(t) => {
+                if (t === "subscriptions") setActiveTab("subscriptions");
+                else if (t === "invoices") setActiveTab("invoices");
+                else setActiveTab("dashboard");
+              }}
+              onViewSubscription={(sub) => setSelectedSubscription(sub)}
+              onViewInvoice={(inv) => setSelectedInvoice(inv)}
+              onPayInvoice={(inv) => setPayingInvoice(inv)}
+              onSeedDemo={handleSeedDemo}
+              seeding={seeding}
+            />
+          )}
 
-        {activeTab === "quotations" && (
-          <PortalQuotations
-            onAcceptSuccess={() => {
-              fetchDashboard();
-              setActiveTab("subscriptions");
-            }}
-          />
-        )}
+          {activeTab === "catalogue" && (
+            <PortalCatalogue
+              onRequestQuoteSuccess={() => {
+                fetchDashboard();
+                setActiveTab("quotations");
+              }}
+            />
+          )}
 
-        {activeTab === "subscriptions" && (
-          <PortalSubscriptions
-            subscriptions={subscriptions}
-            onViewSubscription={(sub) => setSelectedSubscription(sub)}
-            onRefresh={fetchDashboard}
-          />
-        )}
+          {activeTab === "quotations" && (
+            <PortalQuotations
+              onAcceptSuccess={() => {
+                fetchDashboard();
+                setActiveTab("subscriptions");
+              }}
+            />
+          )}
 
-        {activeTab === "invoices" && (
-          <PortalInvoices
-            invoices={invoices}
-            onViewInvoice={(inv) => setSelectedInvoice(inv)}
-            onPayInvoice={(inv) => setPayingInvoice(inv)}
-          />
-        )}
+          {activeTab === "subscriptions" && (
+            <PortalSubscriptions
+              subscriptions={subscriptions}
+              onViewSubscription={(sub) => setSelectedSubscription(sub)}
+              onRefresh={fetchDashboard}
+            />
+          )}
 
-        {activeTab === "payments" && (
-          <PortalPayments payments={payments} totalPaid={metrics.totalPaid} />
-        )}
+          {activeTab === "invoices" && (
+            <PortalInvoices
+              invoices={invoices}
+              onViewInvoice={(inv) => setSelectedInvoice(inv)}
+              onPayInvoice={(inv) => setPayingInvoice(inv)}
+            />
+          )}
 
-        {activeTab === "access" && (
-          <PortalSoftwareAccess
-            onPayOverdue={() => setActiveTab("invoices")}
-          />
-        )}
+          {activeTab === "payments" && (
+            <PortalPayments payments={payments} totalPaid={metrics.totalPaid} />
+          )}
 
-        {activeTab === "notifications" && (
-          <PortalNotifications
-            onNavigateTab={(t) => {
-              if (t === "invoices") setActiveTab("invoices");
-              else if (t === "quotations") setActiveTab("quotations");
-              else if (t === "subscriptions") setActiveTab("subscriptions");
-              else if (t === "payments") setActiveTab("payments");
-              else if (t === "access") setActiveTab("access");
-              else setActiveTab("dashboard");
-            }}
-          />
-        )}
+          {activeTab === "access" && (
+            <PortalSoftwareAccess
+              onPayOverdue={() => setActiveTab("invoices")}
+            />
+          )}
 
-        {activeTab === "profile" && (
-          <PortalProfile
-            customer={customer}
-            onUpdate={(updated: PortalCustomer) =>
-              setData((prev: PortalDashboardData | null) =>
-                prev ? { ...prev, customer: updated } : null
-              )
-            }
-          />
-        )}
+          {activeTab === "notifications" && (
+            <PortalNotifications
+              onNavigateTab={(t) => {
+                if (t === "invoices") setActiveTab("invoices");
+                else if (t === "quotations") setActiveTab("quotations");
+                else if (t === "subscriptions") setActiveTab("subscriptions");
+                else if (t === "payments") setActiveTab("payments");
+                else if (t === "access") setActiveTab("access");
+                else setActiveTab("dashboard");
+              }}
+            />
+          )}
 
-        {activeTab === "support" && (
-          <PortalSupport
-            subscriptions={subscriptions}
-            invoices={invoices}
-          />
-        )}
-      </main>
+          {activeTab === "profile" && (
+            <PortalProfile
+              customer={customer}
+              onUpdate={(updated: PortalCustomer) =>
+                setData((prev: PortalDashboardData | null) =>
+                  prev ? { ...prev, customer: updated } : null
+                )
+              }
+            />
+          )}
 
-      {/* Payment Modal */}
+          {activeTab === "support" && (
+            <PortalSupport
+              subscriptions={subscriptions}
+              invoices={invoices}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* ── Modals & Drawers ──────────────────────────────────────────── */}
       {payingInvoice && (
         <PortalPaymentModal
           invoice={payingInvoice}
@@ -417,7 +513,6 @@ export function PortalShell({ initialData }: Props) {
         />
       )}
 
-      {/* Invoice Drawer */}
       <PortalInvoiceDrawer
         invoice={selectedInvoice}
         customer={customer}
@@ -428,7 +523,6 @@ export function PortalShell({ initialData }: Props) {
         }}
       />
 
-      {/* Subscription Drawer */}
       <PortalSubscriptionDrawer
         subscription={selectedSubscription}
         onClose={() => setSelectedSubscription(null)}
