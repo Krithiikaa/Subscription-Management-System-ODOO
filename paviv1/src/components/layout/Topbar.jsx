@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
   Menu,
   Search,
@@ -10,9 +10,11 @@ import {
   User,
   Settings,
   LogOut,
-  Sparkles,
+  LogIn,
+  ShieldCheck,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ROUTE_TITLES = {
   '/': 'Enterprise Dashboard',
@@ -26,12 +28,18 @@ const ROUTE_TITLES = {
   '/payments': 'Payments & Gateways',
   '/portal': 'Customer Portal',
   '/customer-portal': 'Customer Portal',
+  '/staff': 'Staff Operations Desk',
+  '/staff-management': 'Staff & Team Access',
+  '/profile': 'User Profile',
   '/settings': 'System Settings',
 };
 
 export function Topbar({ onOpenSidebar }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { user, profile, role, logout } = useAuth();
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -54,6 +62,18 @@ export function Topbar({ onOpenSidebar }) {
   }, []);
 
   const currentTitle = ROUTE_TITLES[location.pathname] || 'Dashboard';
+
+  const handleLogout = async () => {
+    setShowUserMenu(false);
+    await logout();
+    navigate('/login');
+  };
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || 'Sarah Jenkins';
+  const displayRole = role
+    ? role.charAt(0).toUpperCase() + role.slice(1)
+    : 'Enterprise Admin';
+  const displayEmail = profile?.email || user?.email || 'sarah.jenkins@brightloop.io';
 
   const notifications = [
     {
@@ -99,7 +119,7 @@ export function Topbar({ onOpenSidebar }) {
             {currentTitle}
           </h1>
           <p className="text-xs text-stone-500 dark:text-stone-400 hidden sm:block font-sans">
-            Brightloop Software &bull; Subscription Engine
+            Brightloop Software &bull; Role: {displayRole}
           </p>
         </div>
       </div>
@@ -205,9 +225,9 @@ export function Topbar({ onOpenSidebar }) {
         </div>
 
         {/* Divider */}
-        <div className="h-6 w-px bg-stone-200 dark:bg-stone-800" />
+        <div className="h-6 w-px bg-stone-200 dark:border-stone-800" />
 
-        {/* User Profile Section */}
+        {/* User Profile Section or Sign In Link */}
         <div className="relative" ref={userRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
@@ -216,17 +236,17 @@ export function Topbar({ onOpenSidebar }) {
           >
             <div className="relative">
               <div className="w-8 h-8 rounded-full bg-amber-400 text-stone-950 font-bold flex items-center justify-center text-xs shadow-sm ring-2 ring-amber-300/40">
-                SJ
+                {displayName.substring(0, 2).toUpperCase()}
               </div>
               <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-stone-900" />
             </div>
 
             <div className="text-left hidden md:block">
               <div className="text-xs font-semibold text-stone-900 dark:text-stone-100 leading-tight">
-                Sarah Jenkins
+                {displayName}
               </div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-400">
-                Enterprise Admin
+              <div className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1">
+                <span>{displayRole}</span>
               </div>
             </div>
 
@@ -234,41 +254,69 @@ export function Topbar({ onOpenSidebar }) {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xl z-50 py-1 font-sans">
+            <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xl z-50 py-1 font-sans">
               <div className="px-4 py-2.5 border-b border-stone-100 dark:border-stone-800">
-                <p className="text-xs font-semibold text-stone-900 dark:text-white">
-                  Brightloop Software
+                <p className="text-xs font-semibold text-stone-900 dark:text-white truncate">
+                  {displayName}
                 </p>
-                <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
-                  sarah.jenkins@brightloop.io
+                <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate font-mono">
+                  {displayEmail}
                 </p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  Role: {displayRole}
+                </span>
               </div>
 
               <div className="py-1">
-                <button
+                <Link
+                  to="/profile"
                   onClick={() => setShowUserMenu(false)}
                   className="w-full px-4 py-2 text-left text-xs text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 flex items-center gap-2.5"
                 >
                   <User className="w-4 h-4 text-stone-400" />
-                  Account Settings
-                </button>
-                <button
+                  Account & Security Profile
+                </Link>
+
+                {role === 'admin' && (
+                  <Link
+                    to="/staff-management"
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full px-4 py-2 text-left text-xs text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 flex items-center gap-2.5"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
+                    Staff Management (Admin)
+                  </Link>
+                )}
+
+                <Link
+                  to="/settings"
                   onClick={() => setShowUserMenu(false)}
                   className="w-full px-4 py-2 text-left text-xs text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 flex items-center gap-2.5"
                 >
                   <Settings className="w-4 h-4 text-stone-400" />
-                  Billing Rules & Org
-                </button>
+                  System Settings
+                </Link>
               </div>
 
               <div className="border-t border-stone-100 dark:border-stone-800 pt-1">
-                <button
-                  onClick={() => setShowUserMenu(false)}
-                  className="w-full px-4 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2.5"
-                >
-                  <LogOut className="w-4 h-4 text-rose-500" />
-                  Sign Out
-                </button>
+                {user ? (
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2.5"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-500" />
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full px-4 py-2 text-left text-xs text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 flex items-center gap-2.5 font-medium"
+                  >
+                    <LogIn className="w-4 h-4 text-amber-600" />
+                    Sign In
+                  </Link>
+                )}
               </div>
             </div>
           )}

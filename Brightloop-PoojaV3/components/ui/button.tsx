@@ -5,29 +5,29 @@ import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] transition-all duration-150",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] transition-all duration-150",
   {
     variants: {
       variant: {
         default:
-          "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm",
+          "bg-[#181D24] text-white hover:bg-slate-800 dark:bg-amber-400 dark:text-slate-900 dark:hover:bg-amber-500 shadow-sm",
         primary:
-          "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm",
+          "bg-amber-400 text-slate-900 hover:bg-amber-500 shadow-sm font-bold",
         secondary:
           "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700",
         destructive:
-          "bg-red-600 text-white hover:bg-red-700 shadow-sm",
+          "bg-rose-600 text-white hover:bg-rose-700 shadow-sm",
         outline:
-          "border border-slate-200 dark:border-slate-800 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100",
+          "border border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200",
         ghost:
           "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300",
-        link: "text-indigo-600 underline-offset-4 hover:underline",
+        link: "text-amber-600 dark:text-amber-400 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-11 rounded-lg px-6 text-base",
-        icon: "h-9 w-9",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-11 rounded-2xl px-6 text-base",
+        icon: "h-9 w-9 rounded-full",
       },
     },
     defaultVariants: {

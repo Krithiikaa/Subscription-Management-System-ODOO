@@ -1,9 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AppShell } from "@/components/shared/app-shell";
-import { StatCard } from "@/components/shared/stat-card";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MoneyText } from "@/components/shared/money-text";
 import { DateText } from "@/components/shared/date-text";
@@ -11,27 +9,19 @@ import {
   Users,
   CreditCard,
   Receipt,
-  AlertCircle,
-  TrendingUp,
   Play,
   RotateCw,
   Clock,
+  ArrowUpRight,
+  CheckCircle2,
+  ChevronDown,
   Sparkles,
+  Shield,
+  Layers,
+  Percent,
+  Calendar,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  Legend,
-} from "recharts";
+import { toast } from "sonner";
 
 export default function AdminDashboardPage() {
   const [data, setData] = React.useState<any>(null);
@@ -61,260 +51,438 @@ export default function AdminDashboardPage() {
       const res = await fetch("/api/admin/run-billing", { method: "POST" });
       const json = await res.json();
       setBillingResult(json.summary);
+      toast.success(json.message || "Billing engine ran successfully!");
       loadData();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to execute billing engine");
     } finally {
       setBillingRunning(false);
     }
   };
 
-  const revenueByMonthData = [
-    { month: "May", revenue: 42000 },
-    { month: "Jun", revenue: 58000 },
-    { month: "Jul", revenue: 64000 },
-    { month: "Aug", revenue: 79000 },
-    { month: "Sep", revenue: 95000 },
-    { month: "Oct", revenue: data?.kpis?.revenueCollected || 124500 },
-  ];
-
-  const paidVsOutstandingData = [
-    {
-      name: "Total Volume",
-      Paid: data?.kpis?.revenueCollected || 120000,
-      Outstanding: data?.kpis?.outstanding || 35000,
-    },
-  ];
-
-  const donutColors = ["#4F46E5", "#10B981", "#F59E0B", "#64748B", "#EF4444"];
-
-  const donutData = (data?.statusDistribution || []).map((s: any, idx: number) => ({
-    name: s.status,
-    value: s.count,
-    color: donutColors[idx % donutColors.length],
-  }));
-
   return (
-    <AppShell role="ADMIN" breadcrumbs={[{ label: "Admin Dashboard" }]}>
-      <div className="space-y-8">
-        {/* Top Header & Run Billing Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-          <div>
-            <h1 className="text-2xl font-bold font-heading text-slate-900 dark:text-white tracking-tight">
-              Executive Finance & Subscription Dashboard
+    <div className="space-y-6 sm:space-y-8 font-sans">
+        {/* Top Hero Welcoming Header (Crextio/Nixtio style) */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-slate-900 dark:text-white">
+              Welcome in, <span className="font-semibold">BrightLoop</span>
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Live SQL aggregate metrics, real-time MRR normalization, and automated billing control.
-            </p>
+
+            {/* Lifecycle Segmented Pill Progress Bar */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Quotations</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-[#181D24] text-white text-[10px] font-bold">15%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Confirmed</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[10px] font-bold">20%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Active</span>
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-[10px] font-bold">60%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Overdue</span>
+                <span className="px-2.5 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-bold">5%</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={handleRunBilling}
-              isLoading={billingRunning}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-sm gap-2 text-xs h-9"
-            >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              Run Billing Engine
-            </Button>
+          {/* Top Right: 3 Big Geometric Number Counters (Crextio style) */}
+          <div className="flex items-center gap-6 sm:gap-8 shrink-0">
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl sm:text-4xl font-light text-slate-900 dark:text-white tabular-nums tracking-tight">
+                  {data?.kpis?.activeSubscriptions ?? 78}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium tracking-wide">
+                Active Subs
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl sm:text-4xl font-light text-slate-900 dark:text-white tabular-nums tracking-tight">
+                  56
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium tracking-wide">
+                Invoices
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl sm:text-4xl font-light text-slate-900 dark:text-white tabular-nums tracking-tight">
+                  ₹{(Math.round((data?.kpis?.revenueCollected || 124500) / 1000))}k
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium tracking-wide">
+                Revenue
+              </span>
+            </div>
           </div>
         </div>
 
-        {billingResult && (
-          <div className="p-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200 flex items-center justify-between">
-            <span>
-              ✅ Billing engine executed: <strong>{billingResult.created}</strong> invoice(s) generated,{" "}
-              <strong>{billingResult.skipped}</strong> skipped, <strong>{billingResult.failed}</strong> failed.
-            </span>
-            <button
-              onClick={() => setBillingResult(null)}
-              className="text-xs font-semibold underline text-indigo-600"
-            >
-              Dismiss
-            </button>
+        {/* 4 Bento Widget Columns (Exact Crextio layout) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 sm:gap-6">
+          {/* Column 1: User Spotlight Profile Card (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col justify-between p-6 rounded-[2rem] bg-white dark:bg-[#181D26] border border-slate-200/80 dark:border-slate-800 shadow-crextio">
+            <div className="space-y-4">
+              {/* Photo Avatar Card with badge */}
+              <div className="relative w-full aspect-[4/3] rounded-2xl bg-gradient-to-tr from-amber-200 via-amber-300 to-amber-100 dark:from-slate-800 dark:to-slate-700 overflow-hidden flex flex-col justify-between p-4 shadow-inner">
+                <div className="self-end px-3 py-1 rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white text-[10px] font-bold shadow-sm">
+                  ₹2,560/mo
+                </div>
+
+                <div className="space-y-0.5">
+                  <h3 className="font-heading font-bold text-base text-slate-900 dark:text-white">
+                    Pooja Admin
+                  </h3>
+                  <p className="text-[11px] text-slate-700 dark:text-slate-300 font-medium">
+                    Executive & Finance
+                  </p>
+                </div>
+              </div>
+
+              {/* Accordion Links */}
+              <div className="space-y-1.5 pt-2 text-xs">
+                <Link
+                  href="/admin/plans"
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <span className="font-medium">Subscription Plans</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+                <Link
+                  href="/admin/invoices"
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <span className="font-medium">Billing Engine Cycle</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+                <Link
+                  href="/admin/taxes"
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <span className="font-medium">Tax & GST Summary</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+                <Link
+                  href="/admin/discounts"
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                >
+                  <span className="font-medium">Discount Rules</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+              </div>
+            </div>
           </div>
-        )}
 
-        {/* Top Row: 5 Bento KPI Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard
-            title="Active Subscriptions"
-            value={data?.kpis?.activeSubscriptions ?? "—"}
-            icon={Users}
-            trend={{ value: "+5.2%", isPositive: true }}
-            sparklineData={[10, 14, 18, 22, 25, 28, 30]}
-          />
-          <StatCard
-            title="Revenue Collected"
-            value={`₹${(data?.kpis?.revenueCollected || 0).toLocaleString("en-IN")}`}
-            icon={CreditCard}
-            trend={{ value: "+12.8%", isPositive: true }}
-            sparklineData={[20, 35, 45, 60, 75, 90, 110]}
-          />
-          <StatCard
-            title="Outstanding Balance"
-            value={`₹${(data?.kpis?.outstanding || 0).toLocaleString("en-IN")}`}
-            icon={Receipt}
-            trend={{ value: "-4.1%", isPositive: true }}
-            sparklineData={[50, 45, 40, 35, 30, 25, 20]}
-          />
-          <StatCard
-            title="Overdue Amount"
-            value={`₹${(data?.kpis?.overdueAmount || 0).toLocaleString("en-IN")}`}
-            icon={AlertCircle}
-            trend={{ value: "+2.0%", isPositive: false }}
-            sparklineData={[5, 8, 12, 10, 15, 14, 18]}
-          />
-          <StatCard
-            title="Normalized MRR"
-            value={`₹${(data?.kpis?.mrr || 0).toLocaleString("en-IN")}`}
-            icon={TrendingUp}
-            trend={{ value: "+8.4%", isPositive: true }}
-            sparklineData={[40, 45, 50, 58, 65, 72, 85]}
-          />
+          {/* Column 2: Progress Widget with Vertical Bar Indicators (3 cols) */}
+          <div className="lg:col-span-3 p-6 rounded-[2rem] bg-white dark:bg-[#181D26] border border-slate-200/80 dark:border-slate-800 shadow-crextio flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">Progress</span>
+                <Link
+                  href="/admin/invoices"
+                  className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-105 transition-transform"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              <div className="mt-3">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-light tracking-tight text-slate-900 dark:text-white">
+                    ₹{(Math.round((data?.kpis?.revenueCollected || 124500) / 1000))}k
+                  </span>
+                  <span className="text-[11px] text-slate-400">Total volume</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Custom Vertical Bar Indicators (Crextio pill style) */}
+            <div className="pt-6">
+              <div className="flex items-end justify-between gap-2 h-36 px-2">
+                {/* S */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2.5 h-12 rounded-full bg-slate-200 dark:bg-slate-700" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  <span className="text-[10px] text-slate-400 font-medium">S</span>
+                </div>
+
+                {/* M */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2.5 h-20 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="text-[10px] text-slate-400 font-medium">M</span>
+                </div>
+
+                {/* T */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2.5 h-16 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="text-[10px] text-slate-400 font-medium">T</span>
+                </div>
+
+                {/* W */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2.5 h-22 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="text-[10px] text-slate-400 font-medium">W</span>
+                </div>
+
+                {/* T */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2.5 h-24 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#181D24] dark:bg-slate-100" />
+                  <span className="text-[10px] text-slate-400 font-medium">T</span>
+                </div>
+
+                {/* F - Active Amber Bar with floating pill */}
+                <div className="flex flex-col items-center gap-2 relative">
+                  <span className="absolute -top-6 px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[9px] font-bold shadow-sm whitespace-nowrap">
+                    ₹42k
+                  </span>
+                  <div className="w-2.5 h-28 rounded-full bg-amber-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="text-[10px] text-amber-500 font-bold">F</span>
+                </div>
+
+                {/* S */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-2.5 h-10 rounded-full bg-slate-200 dark:bg-slate-700" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  <span className="text-[10px] text-slate-400 font-medium">S</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 3: Circular Billing Cycle Clock Tracker (3 cols) */}
+          <div className="lg:col-span-3 p-6 rounded-[2rem] bg-white dark:bg-[#181D26] border border-slate-200/80 dark:border-slate-800 shadow-crextio flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">Billing Cycle</span>
+              <Link
+                href="/admin/subscriptions"
+                className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-105 transition-transform"
+              >
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {/* Circular Progress Clock Ring */}
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    className="stroke-slate-100 dark:stroke-slate-800"
+                    strokeWidth="8"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    className="stroke-amber-400 transition-all duration-500"
+                    strokeWidth="8"
+                    strokeDasharray="251.2"
+                    strokeDashoffset="65"
+                    strokeLinecap="round"
+                    fill="transparent"
+                  />
+                </svg>
+
+                <div className="absolute flex flex-col items-center text-center">
+                  <span className="text-2xl font-light text-slate-900 dark:text-white tabular-nums tracking-tight">
+                    02:00
+                  </span>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold">
+                    UTC Cron
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Playback action controls below ring */}
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={handleRunBilling}
+                disabled={billingRunning}
+                className="p-2.5 rounded-full bg-[#181D24] text-white hover:bg-slate-800 shadow-sm transition-transform active:scale-95"
+                title="Run Billing Now"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+              </button>
+              <button
+                onClick={loadData}
+                className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+                title="Refresh Metrics"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+              </button>
+              <div className="p-2.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-400">
+                <Clock className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Column 4: Dark Charcoal Operations Card (3 cols) */}
+          <div className="lg:col-span-3 p-6 rounded-[2rem] bg-[#181D24] text-white shadow-crextio-lg flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-heading font-bold text-sm text-white">Billing Tasks</h3>
+                  <span className="text-[10px] text-slate-400">Automated engine</span>
+                </div>
+                <span className="text-2xl font-light text-white tabular-nums">7/8</span>
+              </div>
+
+              {/* Segmented Yellow Bar */}
+              <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex">
+                <div className="w-[85%] h-full bg-amber-400 rounded-full" />
+              </div>
+
+              {/* Task Items with circular yellow checkmarks */}
+              <div className="space-y-3 pt-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-slate-200 text-[11px]">Idempotency Guard</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">100%</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-slate-200 text-[11px]">Month-End Clamping</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">100%</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-slate-200 text-[11px]">Discount Maximizer</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">100%</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="text-slate-200 text-[11px]">Resend Email Delivery</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">Active</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Run Billing Action Button */}
+            <div className="pt-6">
+              <Button
+                onClick={handleRunBilling}
+                isLoading={billingRunning}
+                className="w-full h-10 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs shadow-sm gap-2"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" /> Execute Billing Run
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* Middle Row: Revenue Area Chart (8 cols) & Status Donut (4 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <Card className="lg:col-span-8">
-            <CardHeader>
-              <CardTitle className="text-base">Revenue by Month (INR)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueByMonthData}>
-                    <defs>
-                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="month" stroke="#94A3B8" fontSize={11} tickLine={false} />
-                    <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} />
-                    <Tooltip
-                      formatter={(val: any) => [`₹${Number(val).toLocaleString("en-IN")}`, "Revenue"]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#4F46E5"
-                      strokeWidth={2.5}
-                      fillOpacity={1}
-                      fill="url(#revenueGrad)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+        {/* Bottom Row: Calendar Renewal Schedule & Overdue Tracking */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+          {/* Calendar Schedule Card (8 cols) */}
+          <div className="lg:col-span-8 p-6 rounded-[2rem] bg-white dark:bg-[#181D26] border border-slate-200/80 dark:border-slate-800 shadow-crextio space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-amber-500" />
+                <span className="font-heading font-bold text-sm text-slate-900 dark:text-white">
+                  Subscription Renewal Calendar
+                </span>
               </div>
-            </CardContent>
-          </Card>
+              <span className="text-xs text-slate-400 font-medium">October — November 2026</span>
+            </div>
 
-          <Card className="lg:col-span-4">
-            <CardHeader>
-              <CardTitle className="text-base">Subscriptions by Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-72 w-full flex items-center justify-center">
-                {donutData.length === 0 ? (
-                  <p className="text-xs text-slate-400">No subscription records yet.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={donutData}
-                        innerRadius={55}
-                        outerRadius={85}
-                        paddingAngle={4}
-                        dataKey="value"
-                      >
-                        {donutData.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
+            {/* Timeline Pills */}
+            <div className="space-y-3 pt-1">
+              <div className="p-3.5 rounded-2xl bg-[#181D24] text-white flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-400 text-slate-900 font-bold text-[10px]">
+                    24 OCT
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-xs">Apex Retail Pvt Ltd — Annual Business Renewal</h4>
+                    <p className="text-[10px] text-slate-400">SUB-00101 • ₹19,999/yr</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-emerald-400">Active</span>
               </div>
-            </CardContent>
-          </Card>
-        </div>
 
-        {/* Bottom Row: Paid vs Outstanding & Overdue Invoices Table */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <Card className="lg:col-span-4">
-            <CardHeader>
-              <CardTitle className="text-base">Paid vs Outstanding</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={paidVsOutstandingData}>
-                    <XAxis dataKey="name" stroke="#94A3B8" fontSize={11} />
-                    <YAxis stroke="#94A3B8" fontSize={11} />
-                    <Tooltip formatter={(val: any) => `₹${Number(val).toLocaleString("en-IN")}`} />
-                    <Legend />
-                    <Bar dataKey="Paid" fill="#10B981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Outstanding" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-900 text-white font-bold text-[10px]">
+                    28 OCT
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-xs text-slate-900 dark:text-amber-200">
+                      BlueWave Logistics — Monthly Starter Billing
+                    </h4>
+                    <p className="text-[10px] text-slate-500 dark:text-amber-400/80">SUB-00102 • ₹2,560/mo (Odoo brand)</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Upcoming</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="lg:col-span-8">
-            <CardHeader>
-              <CardTitle className="text-base">Overdue Invoices Requiring Follow-Up</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 font-semibold text-slate-600 dark:text-slate-400">
-                      <th className="py-2.5 px-4">Invoice #</th>
-                      <th className="py-2.5 px-4">Customer</th>
-                      <th className="py-2.5 px-4">Due Date</th>
-                      <th className="py-2.5 px-4 text-center">Days Overdue</th>
-                      <th className="py-2.5 px-4 text-right">Balance Due</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                    {(data?.overdueInvoices || []).length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="py-8 text-center text-slate-400">
-                          ✨ Zero overdue invoices! All payments are up to date.
-                        </td>
-                      </tr>
-                    ) : (
-                      data.overdueInvoices.map((inv: any) => (
-                        <tr key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/40">
-                          <td className="py-3 px-4 font-mono font-semibold text-slate-900 dark:text-slate-100">
-                            {inv.number}
-                          </td>
-                          <td className="py-3 px-4 font-medium">{inv.customerName}</td>
-                          <td className="py-3 px-4">
-                            <DateText date={inv.dueDate} />
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400">
-                              {inv.daysOverdue} days
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right font-bold text-red-600 tabular-nums">
-                            <MoneyText amount={inv.balance} />
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Overdue Watchlist Card (4 cols) */}
+          <div className="lg:col-span-4 p-6 rounded-[2rem] bg-white dark:bg-[#181D26] border border-slate-200/80 dark:border-slate-800 shadow-crextio space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="font-heading font-bold text-sm text-slate-900 dark:text-white">
+                Overdue Invoices
+              </span>
+              <span className="text-xs font-bold text-rose-500">
+                ₹{(data?.kpis?.overdueAmount || 0).toLocaleString("en-IN")}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {(data?.overdueInvoices || []).length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  ✨ Zero overdue invoices! All payments are current.
+                </div>
+              ) : (
+                data.overdueInvoices.slice(0, 3).map((inv: any) => (
+                  <div
+                    key={inv.id}
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="font-semibold text-slate-900 dark:text-white">{inv.number}</div>
+                      <div className="text-[10px] text-slate-400">{inv.customerName}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-rose-600 tabular-nums">
+                        <MoneyText amount={inv.balance} />
+                      </div>
+                      <div className="text-[10px] text-rose-500 font-medium">{inv.daysOverdue}d overdue</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </AppShell>
   );
 }
-
