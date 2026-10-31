@@ -123,29 +123,13 @@ Full plan presented and approved before any schema change (see plan-mode transcr
 - **Product categories**: added a `product_categories` table (id, name unique, active) with `products.category` and `tax_rules.category` converted to real foreign keys (`ON UPDATE CASCADE`, `ON DELETE RESTRICT`) — renaming a category now cascades to every product/tax rule using it automatically, and a category can't be deleted while in use (no delete endpoint exposed at all; only deactivate). Migrated in the correct order (table created and seeded with the original 11 names *before* the FK was added) so all 10 existing seeded products stayed valid throughout — verified via `psql` at each step. New `GET/POST /api/categories`, `PATCH /api/categories/[id]`, and a small `CategoryManager` panel on the Products page. Verified live: case-insensitive duplicate rejected, rename cascaded to an existing product, then reverted.
 - **Regression + data integrity**: re-ran the full Vitest suite (82/82 passing — 68 from Phase 2 + 14 new), `tsc --noEmit`, `next lint`, and a production build (36/36 pages) — all clean. Final row-count check: 4 users, 1 customer, 10 products, 11 categories, 1 tax rule, 3 discounts, 0 staff assignments — matches expectations exactly, no data loss, no duplicate seed rows. `paviv1/` and `Brightloop-PoojaV3/` untouched.
 
-## Phase 3 — Quotation Management + Subscription Lifecycle (✅ Complete)
+No push performed.
 
-Full workflow: Product+Plan → Quotation Template → Quotation → Customer Approval → Confirmed Subscription → Active Subscription, verified end-to-end against the real Neon DB.
-
-- **Schema**: new `quotations` and `quotation_lines` tables; `template_lines` and `subscription_lines` extended with `planId` plus full historical snapshot columns (product/variant/plan name, code, billing period, tax/discount amounts) so later catalogue price changes never retroactively affect an existing quotation or subscription — verified live by changing BrightMail's price mid-test and confirming the existing subscription line kept its original price. Corrected a Phase 0 gap where both `quotation_templates` and `subscriptions` had a single top-level `planId` that couldn't support multi-product documents; each line now carries its own plan.
-- **Quotations**: full DRAFT→SENT→ACCEPTED/REJECTED/EXPIRED/CANCELLED state machine (`src/lib/quotation-lifecycle.ts`), server-side only, with a `GET/POST /api/quotations` + `send`/`accept`/`reject`/`convert`/`duplicate` actions. Accept/reject use an atomic conditional `UPDATE ... WHERE status = 'SENT'` (not a check-then-write) so a double-accept race can't double-process a quotation — verified live (second accept attempt correctly rejected).
-- **Subscriptions**: DRAFT/QUOTATION/CONFIRMED/ACTIVE/PAUSED/CLOSED lifecycle (`src/lib/subscription-lifecycle.ts`) with `confirm`/`activate`/`pause`/`resume`/`renew`/`close` actions. Pause/close/renew are gated by the plan's `pausable`/`closable`/`renewable` flags across *every* line on the subscription (documented all-lines-must-permit rule) — verified live (pause correctly rejected on a non-pausable plan, then allowed after flipping the flag). Renewal creates a new linked subscription and closes the old one (`renewedFromSubscriptionId`/`renewedToSubscriptionId`), guarded the same atomic-conditional-update way as quotation conversion to prevent duplicate renewals.
-- **Conversion** (`POST /api/quotations/[id]/convert`): idempotent — converting an already-converted quotation returns the existing subscription instead of creating a duplicate; verified live. If a concurrent conversion wins the race, the loser's subscription insert is rolled back entirely (no orphan rows).
-- **Authorization**: staff can only create/manage quotations and subscriptions where they're authorized for every product line (not just one) — verified live with a mock staff account blocked (403) from quoting a product outside their assignment, and their quotation list correctly excluding it.
-- **Pricing**: all lines are resolved and priced server-side via `src/lib/line-items.ts`, reusing Phase 2's `calculatePricingPreview` — the client never supplies a trusted total.
-- **UI**: new "Commercial" admin nav group (Quotation Templates, Quotations, Subscriptions) with a shared line-item editor, plus customer portal "My Quotations" (with accept/reject) and "My Subscriptions".
-- **Audit log**: every status change and creation across quotations/subscriptions is recorded via `src/lib/audit.ts`, reusing the existing `audit_logs` table — verified live (10 entries for one full quotation→subscription→renewal→close cycle).
-- **Bug caught and fixed during live testing**: the temporary placeholder order-number generated before a row's real sequential ID is known exceeded the `number` column's `varchar(20)` limit on the very first real insert — fixed in `src/lib/numbering.ts`, then verified with a real `QUO-0001`/`SUB-0001`/`SUB-0002` sequence.
-- **Mock data**: `npm run db:seed:mock-staff` — 20 mock staff accounts (password `Odoo@2026`), 2 assigned per seeded product, idempotent.
-- **UI fix**: the quotation/template line-item form let you submit with a line missing its Product/Plan selection, silently dropping that line and surfacing only a generic "at least one line" server error. Added `required` on those selects plus explicit client-side validation naming the actual problem.
-- **Regression + data integrity**: 111/111 Vitest tests (29 new), `tsc --noEmit` clean, `next lint` clean, production build green. Final row counts confirmed unchanged except intentional mock-staff additions; all test quotations/subscriptions/audit entries created during live smoke testing were cleaned up afterward.
-
-**Known limitations / design decisions**: no dedicated endpoint reaches the subscription `QUOTATION` status (that concept is now owned by the real Quotation entity) — direct admin-created subscriptions fast-track `DRAFT`→`CONFIRMED`; no automated route-handler tests (none existed to extend, covered by live smoke testing instead).
-
-## Not Yet Done (Phases 4–7)
+## Not Yet Done (Phases 3–7)
 
 | Phase | Scope |
 |---|---|
+| 3 | Quotation templates, subscriptions, status state machine + stepper UI |
 | 4 | Billing engine: cron + "Run billing now", invoice generation with locking/idempotency, Vitest coverage |
 | 5 | Payments: record/partial/auto-settle, idempotency, overpayment rejection |
 | 6 | Finance dashboard, customer portal, public pricing page |

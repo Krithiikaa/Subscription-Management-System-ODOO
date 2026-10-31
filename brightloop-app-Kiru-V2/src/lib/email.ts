@@ -12,33 +12,6 @@ function getTransport() {
   });
 }
 
-export async function sendQuotationEmail(to: string, quotationUrl: string, quotationNumber: string): Promise<boolean> {
-  const transport = getTransport();
-
-  if (!transport) {
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[dev] Quotation ${quotationNumber} link for ${to}: ${quotationUrl}`);
-      return true;
-    }
-    console.error("Email not sent: SMTP is not configured");
-    return false;
-  }
-
-  try {
-    await transport.sendMail({
-      from: process.env.EMAIL_FROM ?? "no-reply@brightloop.demo",
-      to,
-      subject: `Quotation ${quotationNumber} from Brightloop`,
-      text: `You have a new quotation (${quotationNumber}) ready for review: ${quotationUrl}\n\nLog in to your Brightloop account to view the full breakdown and respond.`,
-      html: `<p>You have a new quotation <strong>${quotationNumber}</strong> ready for review.</p><p><a href="${quotationUrl}">View and respond to the quotation</a></p><p>Log in to your Brightloop account if the link doesn't work directly.</p>`,
-    });
-    return true;
-  } catch (err) {
-    console.error(`Failed to send quotation email for ${quotationNumber}:`, err);
-    return false;
-  }
-}
-
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<boolean> {
   const transport = getTransport();
 

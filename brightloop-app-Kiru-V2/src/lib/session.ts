@@ -1,7 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+const rawSecret =
+  process.env.JWT_SECRET ||
+  "brightloop-production-fallback-jwt-secret-key-must-be-at-least-32-chars!";
+const JWT_SECRET = new TextEncoder().encode(rawSecret);
 const COOKIE_NAME = "bl_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 

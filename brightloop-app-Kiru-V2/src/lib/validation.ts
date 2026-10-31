@@ -83,7 +83,7 @@ export const moneyString = z
 
 export const currencySchema = z.string().trim().toUpperCase().length(3, "Currency must be a 3-letter code").default("INR");
 
-export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date (YYYY-MM-DD)");
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be a valid date (YYYY-MM-DD)");
 
 export const createProductSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(255),
@@ -274,90 +274,4 @@ export const pricingPreviewSchema = z.object({
   quantity: z.number().int().positive().default(1),
   taxRuleId: z.number().int().positive().optional(),
   discountId: z.number().int().positive().optional(),
-});
-
-// ─── Quotations & Subscriptions (Phase 3) ──────────────────────────────────────
-
-export const QUOTATION_STATUSES = ["DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED", "CANCELLED"] as const;
-export const SUBSCRIPTION_STATUSES = ["DRAFT", "QUOTATION", "CONFIRMED", "ACTIVE", "PAUSED", "CLOSED"] as const;
-
-export const lineItemInputSchema = z.object({
-  productId: z.number().int().positive(),
-  variantId: z.number().int().positive().optional(),
-  planId: z.number().int().positive(),
-  quantity: z.number().int().positive().default(1),
-  taxRuleId: z.number().int().positive().optional(),
-  discountId: z.number().int().positive().optional(),
-  description: z.string().trim().max(500).optional(),
-});
-
-export const createTemplateSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(255),
-  description: z.string().trim().max(2000).optional(),
-  validityDays: z.number().int().positive().default(30),
-  defaultPaymentTerms: z.string().trim().max(100).optional(),
-  notes: z.string().trim().max(2000).optional(),
-  lines: z.array(lineItemInputSchema).min(1, "At least one line is required"),
-});
-
-export const updateTemplateSchema = z.object({
-  name: z.string().trim().min(1).max(255).optional(),
-  description: z.string().trim().max(2000).optional(),
-  validityDays: z.number().int().positive().optional(),
-  defaultPaymentTerms: z.string().trim().max(100).optional(),
-  notes: z.string().trim().max(2000).optional(),
-  active: z.boolean().optional(),
-  lines: z.array(lineItemInputSchema).min(1).optional(),
-});
-
-export const createQuotationSchema = z.object({
-  customerId: z.number().int().positive(),
-  templateId: z.number().int().positive().optional(),
-  paymentTerms: z.string().trim().max(100).optional(),
-  currency: currencySchema,
-  notes: z.string().trim().max(2000).optional(),
-  termsAndConditions: z.string().trim().max(5000).optional(),
-  validUntil: isoDateSchema.optional(),
-  lines: z.array(lineItemInputSchema).min(1, "At least one line is required"),
-});
-
-export const updateQuotationSchema = z.object({
-  paymentTerms: z.string().trim().max(100).optional(),
-  currency: currencySchema.optional(),
-  notes: z.string().trim().max(2000).optional(),
-  termsAndConditions: z.string().trim().max(5000).optional(),
-  validUntil: isoDateSchema.optional(),
-  lines: z.array(lineItemInputSchema).min(1).optional(),
-});
-
-export const rejectQuotationSchema = z.object({
-  reason: z.string().trim().max(1000).optional(),
-});
-
-export const createSubscriptionSchema = z.object({
-  customerId: z.number().int().positive(),
-  startDate: isoDateSchema,
-  expiryDate: isoDateSchema.optional(),
-  paymentTerms: z.string().trim().max(100).optional(),
-  assignedStaffId: z.number().int().positive().optional(),
-  notes: z.string().trim().max(2000).optional(),
-  lines: z.array(lineItemInputSchema).min(1, "At least one line is required"),
-});
-
-export const pauseSubscriptionSchema = z.object({
-  reason: z.string().trim().max(1000).optional(),
-});
-
-export const closeSubscriptionSchema = z.object({
-  reason: z.string().trim().max(1000).optional(),
-});
-
-export const renewSubscriptionSchema = z.object({
-  startDate: isoDateSchema.optional(),
-  expiryDate: isoDateSchema.optional(),
-  lines: z.array(lineItemInputSchema).min(1).optional(),
-});
-
-export const assignStaffToSubscriptionSchema = z.object({
-  assignedStaffId: z.number().int().positive().nullable(),
 });

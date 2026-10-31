@@ -10,7 +10,10 @@ neonConfig.webSocketConstructor = ws;
 
 // Use the direct (non-pgbouncer) connection string — Neon's serverless Pool
 // does its own connection management and conflicts with PgBouncer pooling.
-const pool = new Pool({ connectionString: process.env.DIRECT_URL! });
+const connectionString =
+  process.env.DIRECT_URL ||
+  process.env.DATABASE_URL ||
+  "postgres://demo:demo@localhost:5432/brightloop";
+const pool = new Pool({ connectionString });
 export const db = drizzle(pool, { schema });
 export type Db = typeof db;
-export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];

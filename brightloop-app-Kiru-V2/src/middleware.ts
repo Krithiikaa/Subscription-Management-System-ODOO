@@ -3,7 +3,16 @@ import type { NextRequest } from "next/server";
 import { verifySession } from "@/lib/session";
 
 // Public routes — no auth required
-const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password", "/pricing", "/api/auth", "/api/health"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/pricing",
+  "/api/auth",
+  "/api/health",
+  "/favicon.ico",
+];
 
 // Admin-only route prefixes
 const ADMIN_ROUTES = [
@@ -14,7 +23,6 @@ const ADMIN_ROUTES = [
   "/admin/variants",
   "/admin/plans",
   "/admin/staff-assignments",
-  "/admin/quotation-templates",
 ];
 
 // Staff + Admin routes (not customer)
@@ -69,6 +77,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
