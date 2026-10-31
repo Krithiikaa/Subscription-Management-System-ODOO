@@ -18,6 +18,7 @@ import { sql } from "drizzle-orm";
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 export const roleEnum = pgEnum("role", ["ADMIN", "STAFF", "CUSTOMER"]);
+export const productStatusEnum = pgEnum("product_status", ["ACTIVE", "INACTIVE", "ARCHIVED"]);
 export const billingPeriodEnum = pgEnum("billing_period", ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["DRAFT", "QUOTATION", "CONFIRMED", "ACTIVE", "PAUSED", "CLOSED"]);
 export const invoiceStatusEnum = pgEnum("invoice_status", ["DRAFT", "CONFIRMED", "PAID", "CANCELLED"]);
@@ -76,19 +77,41 @@ export const customers = pgTable("customers", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ─── Product Categories ────────────────────────────────────────────────────────
+
+export const productCategories = pgTable("product_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  nameIdx: uniqueIndex("product_categories_name_unique").on(t.name),
+}));
+
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
+  sku: varchar("sku", { length: 100 }),
+  category: varchar("category", { length: 100 })
+    .notNull()
+    .references(() => productCategories.name, { onDelete: "restrict", onUpdate: "cascade" }),
   type: varchar("type", { length: 100 }).notNull(),
+  description: text("description"),
   salesPrice: numeric("sales_price", { precision: 12, scale: 2 }).notNull().default("0"),
   costPrice: numeric("cost_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  currency: varchar("currency", { length: 3 }).notNull().default("INR"),
   notes: text("notes"),
-  active: boolean("active").notNull().default(true),
+  status: productStatusEnum("status").notNull().default("ACTIVE"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => ({
+  skuIdx: uniqueIndex("products_sku_unique").on(t.sku),
+  salesPriceCheck: check("products_sales_price_non_negative", sql`${t.salesPrice} >= 0`),
+  costPriceCheck: check("products_cost_price_non_negative", sql`${t.costPrice} >= 0`),
+}));
 
 // ─── Product Variants ─────────────────────────────────────────────────────────
 
@@ -96,17 +119,26 @@ export const productVariants = pgTable("product_variants", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
   name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 100 }),
+  description: text("description"),
   extraPrice: numeric("extra_price", { precision: 12, scale: 2 }).notNull().default("0"),
+  costPrice: numeric("cost_price", { precision: 12, scale: 2 }).notNull().default("0"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => ({
+  productCodeIdx: uniqueIndex("product_variants_product_id_code_unique").on(t.productId, t.code),
+  extraPriceCheck: check("product_variants_extra_price_non_negative", sql`${t.extraPrice} >= 0`),
+}));
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
 
 export const plans = pgTable("plans", {
   id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: "restrict" }),
   name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
   price: numeric("price", { precision: 12, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("INR"),
   billingPeriod: billingPeriodEnum("billing_period").notNull(),
   minQuantity: integer("min_quantity").notNull().default(1),
   availableFrom: date("available_from"),
@@ -119,7 +151,10 @@ export const plans = pgTable("plans", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
+  productIdx: index("plans_product_id_idx").on(t.productId),
   priceCheck: check("plans_price_positive", sql`${t.price} >= 0`),
+  minQuantityCheck: check("plans_min_quantity_positive", sql`${t.minQuantity} >= 1`),
+  dateRangeCheck: check("plans_date_range_valid", sql`${t.availableTo} IS NULL OR ${t.availableFrom} IS NULL OR ${t.availableTo} >= ${t.availableFrom}`),
 }));
 
 // ─── Tax Rules ────────────────────────────────────────────────────────────────
@@ -127,12 +162,21 @@ export const plans = pgTable("plans", {
 export const taxRules = pgTable("tax_rules", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 50 }),
   rate: numeric("rate", { precision: 5, scale: 2 }).notNull(),
+  type: varchar("type", { length: 30 }).notNull().default("PERCENTAGE"),
+  description: text("description"),
+  productId: integer("product_id").references(() => products.id, { onDelete: "restrict" }),
+  category: varchar("category", { length: 100 }).references(() => productCategories.name, { onDelete: "restrict", onUpdate: "cascade" }),
+  effectiveFrom: date("effective_from"),
+  effectiveTo: date("effective_to"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
+  codeIdx: uniqueIndex("tax_rules_code_unique").on(t.code),
   rateCheck: check("tax_rules_rate_range", sql`${t.rate} >= 0 AND ${t.rate} <= 100`),
+  dateRangeCheck: check("tax_rules_date_range_valid", sql`${t.effectiveTo} IS NULL OR ${t.effectiveFrom} IS NULL OR ${t.effectiveTo} >= ${t.effectiveFrom}`),
 }));
 
 // ─── Discounts ────────────────────────────────────────────────────────────────
@@ -140,6 +184,8 @@ export const taxRules = pgTable("tax_rules", {
 export const discounts = pgTable("discounts", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 50 }),
+  description: text("description"),
   type: discountTypeEnum("type").notNull(),
   value: numeric("value", { precision: 12, scale: 2 }).notNull(),
   scope: discountScopeEnum("scope").notNull(),
@@ -154,8 +200,24 @@ export const discounts = pgTable("discounts", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
+  codeIdx: uniqueIndex("discounts_code_unique").on(t.code),
   usedCountCheck: check("discounts_used_count_non_negative", sql`${t.usedCount} >= 0`),
   valueCheck: check("discounts_value_positive", sql`${t.value} >= 0`),
+  dateRangeCheck: check("discounts_date_range_valid", sql`${t.endDate} IS NULL OR ${t.startDate} IS NULL OR ${t.endDate} >= ${t.startDate}`),
+}));
+
+// ─── Staff Product Assignments ────────────────────────────────────────────────
+
+export const staffProductAssignments = pgTable("staff_product_assignments", {
+  id: serial("id").primaryKey(),
+  staffId: integer("staff_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  assignedBy: integer("assigned_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  uniqueAssignment: uniqueIndex("staff_product_assignments_staff_product_unique").on(t.staffId, t.productId),
+  staffIdx: index("staff_product_assignments_staff_id_idx").on(t.staffId),
+  productIdx: index("staff_product_assignments_product_id_idx").on(t.productId),
 }));
 
 // ─── Quotation Templates ──────────────────────────────────────────────────────
@@ -303,13 +365,20 @@ export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type LoginAttempt = typeof loginAttempts.$inferSelect;
 export type Customer = typeof customers.$inferSelect;
 export type NewCustomer = typeof customers.$inferInsert;
+export type ProductCategory = typeof productCategories.$inferSelect;
+export type NewProductCategory = typeof productCategories.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type ProductVariant = typeof productVariants.$inferSelect;
+export type NewProductVariant = typeof productVariants.$inferInsert;
 export type Plan = typeof plans.$inferSelect;
 export type NewPlan = typeof plans.$inferInsert;
 export type TaxRule = typeof taxRules.$inferSelect;
+export type NewTaxRule = typeof taxRules.$inferInsert;
 export type Discount = typeof discounts.$inferSelect;
+export type NewDiscount = typeof discounts.$inferInsert;
+export type StaffProductAssignment = typeof staffProductAssignments.$inferSelect;
+export type NewStaffProductAssignment = typeof staffProductAssignments.$inferInsert;
 export type QuotationTemplate = typeof quotationTemplates.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;

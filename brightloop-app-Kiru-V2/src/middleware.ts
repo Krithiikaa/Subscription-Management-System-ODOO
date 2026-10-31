@@ -6,7 +6,15 @@ import { verifySession } from "@/lib/session";
 const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password", "/pricing", "/api/auth", "/api/health"];
 
 // Admin-only route prefixes
-const ADMIN_ROUTES = ["/admin/discounts", "/admin/taxes", "/admin/staff"];
+const ADMIN_ROUTES = [
+  "/admin/discounts",
+  "/admin/taxes",
+  "/admin/staff",
+  "/admin/products",
+  "/admin/variants",
+  "/admin/plans",
+  "/admin/staff-assignments",
+];
 
 // Staff + Admin routes (not customer)
 const STAFF_ROUTES = ["/admin"];
