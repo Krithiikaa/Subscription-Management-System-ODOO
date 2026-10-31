@@ -440,6 +440,10 @@ export function PortalShell({ initialData }: Props) {
                 fetchDashboard();
                 setActiveTab("subscriptions");
               }}
+              onPayInvoice={() => {
+                fetchDashboard();
+                setActiveTab("invoices");
+              }}
             />
           )}
 

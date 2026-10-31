@@ -109,3 +109,4 @@ export function getDepartmentForProduct(
     approvalCode: "DEPT-GEN-00",
   };
 }
+

@@ -265,7 +265,7 @@ textarea.input { min-height: 80px; padding: 10px 12px; resize: vertical; }
   background: var(--panel); border-bottom: 1px solid var(--hairline);
 }
 .app-topbar-title { font-size: var(--text-lg); font-weight: 600; }
-.app-content { flex: 1; padding: 28px; max-width: 1280px; width: 100%; }
+.app-content { flex: 1; padding: 24px; max-width: 1440px; width: 100%; margin: 0 auto; }
 
 @media (max-width: 900px) {
   .app-sidebar { display: none; }
