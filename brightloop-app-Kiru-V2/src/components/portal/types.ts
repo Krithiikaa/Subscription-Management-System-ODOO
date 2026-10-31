@@ -165,6 +165,12 @@ export type PortalQuotation = {
   productCategory: string;
   lines: PortalSubscriptionLine[];
   totalAmount: string;
+  department?: string;
+  assignedStaffName?: string;
+  assignedStaffEmail?: string;
+  isStaffSigned?: boolean;
+  staffSignature?: string;
+  staffSignedAt?: string;
 };
 
 export type PortalSoftwareAccess = {

@@ -221,7 +221,7 @@ export function PortalShell({ initialData }: Props) {
               style={{ minHeight: 32, padding: "0 10px", fontSize: "var(--text-xs)", color: "var(--accent)", borderColor: "var(--accent)" }}
             >
               <Sparkles size={13} />
-              {seeding ? "Seeding..." : "Load Demo Data"}
+              {seeding ? "Loading..." : "Load Initial Products"}
             </button>
           )}
           <button
@@ -277,7 +277,7 @@ export function PortalShell({ initialData }: Props) {
                 fontWeight: 700, fontSize: "var(--text-sm)",
                 marginBottom: 8,
               }}>
-                {(customer.companyName || customer.name || "C").charAt(0).toUpperCase()}
+              {(customer.companyName || customer.name || "?").charAt(0).toUpperCase()}
               </div>
               <div style={{ fontWeight: 600, fontSize: "var(--text-sm)", color: "var(--text)", lineHeight: 1.3 }}>
                 {customer.companyName || customer.name}

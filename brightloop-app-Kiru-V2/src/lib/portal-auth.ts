@@ -29,7 +29,7 @@ export async function requireCustomer(): Promise<
   const fallbackCustomer: typeof customers.$inferSelect = {
     id: customerId ?? 1,
     userId: session.userId,
-    companyName: session.name || "Demo Customer Corp",
+    companyName: session.name || "",
     phone: "+91 98765 43210",
     address: "123 Tech Park, Bengaluru",
     createdAt: new Date(),

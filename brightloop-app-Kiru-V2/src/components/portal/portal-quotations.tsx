@@ -2,9 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { formatMoney, formatDate, STATUS_CLASS } from "@/lib/utils";
-import { FileText, CheckCircle, XCircle, Printer, Eye, Loader2 } from "lucide-react";
+import {
+  FileText,
+  CheckCircle,
+  XCircle,
+  Printer,
+  Eye,
+  Loader2,
+  PenTool,
+  ShieldCheck,
+  Building,
+  UserCheck,
+  FileCheck2,
+} from "lucide-react";
 import type { PortalQuotation } from "./types";
 import { Drawer } from "@/components/shared/drawer";
+import { getDepartmentForProduct } from "@/lib/departments";
 
 type Props = {
   onAcceptSuccess: () => void;
@@ -14,8 +27,13 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
   const [quotations, setQuotations] = useState<PortalQuotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuote, setSelectedQuote] = useState<PortalQuotation | null>(null);
+  const [signingQuote, setSigningQuote] = useState<PortalQuotation | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  // Staff signing form states
+  const [staffNameInput, setStaffNameInput] = useState("");
+  const [signatureNotes, setSignatureNotes] = useState("");
 
   async function fetchQuotations() {
     try {
@@ -36,30 +54,73 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
     fetchQuotations();
   }, []);
 
-  async function handleQuoteAction(quoteId: number, action: "ACCEPT" | "REJECT") {
+  function openStaffSignModal(q: PortalQuotation) {
+    const deptInfo = getDepartmentForProduct(q.productName, q.productCategory);
+    setStaffNameInput(q.assignedStaffName || deptInfo.leadStaff);
+    setSignatureNotes(`Approved in full by ${q.department || deptInfo.department}. Standard terms applicable.`);
+    setSigningQuote(q);
+  }
+
+  async function handleStaffSign(quoteId: number) {
+    if (!signingQuote) return;
     setActionLoading(true);
     setActionMessage(null);
+
+    const deptInfo = getDepartmentForProduct(signingQuote.productName, signingQuote.productCategory);
 
     try {
       const res = await fetch(`/api/portal/quotations/${quoteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({
+          action: "STAFF_SIGN",
+          staffName: staffNameInput || deptInfo.leadStaff,
+          department: signingQuote.department || deptInfo.department,
+          notes: signatureNotes,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Action failed");
+        throw new Error(data.error || "Staff signing failed");
       }
 
       setActionMessage(data.message);
       setTimeout(() => {
+        setSigningQuote(null);
         setSelectedQuote(null);
         fetchQuotations();
         onAcceptSuccess();
       }, 1400);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error processing quotation";
+      const msg = err instanceof Error ? err.message : "Error processing staff signature";
+      alert(msg);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleReject(quoteId: number) {
+    if (!confirm("Are you sure you want to reject this quotation?")) return;
+    setActionLoading(true);
+
+    try {
+      const res = await fetch(`/api/portal/quotations/${quoteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "REJECT" }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Rejection failed");
+
+      setActionMessage("Quotation rejected and closed.");
+      setTimeout(() => {
+        setSelectedQuote(null);
+        fetchQuotations();
+      }, 1000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error rejecting quotation";
       alert(msg);
     } finally {
       setActionLoading(false);
@@ -70,7 +131,7 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
     return (
       <div style={{ padding: "40px 0", textAlign: "center", color: "var(--text-muted)" }}>
         <Loader2 size={28} className="animate-spin" style={{ margin: "0 auto 12px" }} />
-        <p style={{ fontSize: "var(--text-sm)" }}>Loading quotations...</p>
+        <p style={{ fontSize: "var(--text-sm)" }}>Loading quotations & estimates...</p>
       </div>
     );
   }
@@ -91,11 +152,10 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
       >
         <div>
           <h2 className="font-serif" style={{ fontSize: "var(--text-xl)", fontWeight: 700, margin: "0 0 4px" }}>
-            My Quotations & Estimates
+            Quotations & Department Approvals
           </h2>
           <p style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", margin: 0 }}>
-            Review formal proposals, itemized prices, and terms. Accepting a quotation immediately provisions the
-            subscription contract and generates the initial invoice.
+            Formal quotations are routed to authorized staff according to product department. Once reviewed and digitally signed by department staff, the contract is provisioned and invoice is generated.
           </p>
         </div>
       </div>
@@ -107,13 +167,16 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
             No Active Quotations
           </h3>
           <p style={{ fontSize: "var(--text-xs)", margin: 0 }}>
-            Explore our software catalogue to generate an instant quotation proposal.
+            Browse our software catalogue to request a quotation for your organization.
           </p>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
           {quotations.map((q) => {
             const isPending = q.status === "QUOTATION";
+            const deptInfo = getDepartmentForProduct(q.productName, q.productCategory);
+            const department = q.department || deptInfo.department;
+            const staffName = q.assignedStaffName || deptInfo.leadStaff;
 
             return (
               <div
@@ -125,9 +188,11 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
                   flexDirection: "column",
                   justifyContent: "space-between",
                   gap: 16,
+                  border: isPending ? "1px solid var(--accent)" : "1px solid var(--hairline)",
                 }}
               >
                 <div>
+                  {/* Top Bar */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                     <div>
                       <span className="font-mono" style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
@@ -137,15 +202,40 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
                         {q.productName}
                       </h3>
                     </div>
-                    <span className={`badge ${isPending ? "badge-warning" : STATUS_CLASS[q.status] || "badge-draft"}`}>
-                      [{q.status}]
+                    <span className={`badge ${isPending ? "badge-warning" : STATUS_CLASS[q.status] || "badge-active"}`}>
+                      {isPending ? "[PENDING STAFF SIGN-OFF]" : `[${q.status}]`}
                     </span>
                   </div>
 
-                  <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", margin: "0 0 12px" }}>
+                  <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", margin: "0 0 10px" }}>
                     Plan: <strong style={{ color: "var(--text)" }}>{q.planName}</strong> • {q.planBillingPeriod}
                   </p>
 
+                  {/* Department & Staff Card */}
+                  <div
+                    style={{
+                      background: "color-mix(in srgb, var(--accent) 7%, var(--panel))",
+                      border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
+                      borderRadius: "var(--radius)",
+                      padding: "10px 12px",
+                      marginBottom: 12,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                      fontSize: "var(--text-xs)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent)", fontWeight: 600 }}>
+                      <Building size={14} />
+                      <span>{department}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-muted)" }}>
+                      <UserCheck size={14} />
+                      <span>Assigned Staff: <strong style={{ color: "var(--text)" }}>{staffName}</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Pricing Box */}
                   <div
                     style={{
                       background: "var(--table-header)",
@@ -157,14 +247,14 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
                     }}
                   >
                     <div>
-                      <span className="label" style={{ marginBottom: 2 }}>Estimated Amount</span>
+                      <span className="label" style={{ marginBottom: 2 }}>Item Total</span>
                       <span className="font-mono" style={{ fontWeight: 700, fontSize: "var(--text-sm)", color: "var(--accent)" }}>
                         {formatMoney(q.totalAmount)}
                       </span>
                     </div>
 
                     <div style={{ textAlign: "right" }}>
-                      <span className="label" style={{ marginBottom: 2 }}>Valid Until</span>
+                      <span className="label" style={{ marginBottom: 2 }}>Validity</span>
                       <span className="font-mono" style={{ fontWeight: 600 }}>
                         {formatDate(q.expiryDate)}
                       </span>
@@ -172,6 +262,7 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
                   </div>
                 </div>
 
+                {/* Bottom Actions */}
                 <div
                   style={{
                     display: "flex",
@@ -179,6 +270,7 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
                     alignItems: "center",
                     borderTop: "1px solid var(--hairline)",
                     paddingTop: 12,
+                    gap: 8,
                   }}
                 >
                   <button
@@ -187,24 +279,206 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
                     className="btn-ghost"
                     style={{ padding: "0 10px", minHeight: 32, fontSize: "var(--text-xs)", gap: 4 }}
                   >
-                    <Eye size={14} /> Review Details
+                    <Eye size={14} /> Details
                   </button>
 
-                  {isPending && (
+                  {isPending ? (
                     <button
                       type="button"
-                      onClick={() => handleQuoteAction(q.id, "ACCEPT")}
-                      disabled={actionLoading}
+                      onClick={() => openStaffSignModal(q)}
                       className="btn-primary"
-                      style={{ padding: "0 14px", minHeight: 32, fontSize: "var(--text-xs)", gap: 4 }}
+                      style={{ padding: "0 12px", minHeight: 32, fontSize: "var(--text-xs)", gap: 6 }}
                     >
-                      <CheckCircle size={14} /> Accept & Sign
+                      <PenTool size={13} />
+                      Staff Sign & Accept
                     </button>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--success)", fontSize: "var(--text-xs)", fontWeight: 600 }}>
+                      <ShieldCheck size={14} />
+                      <span>Digitally Signed</span>
+                    </div>
                   )}
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Staff Review & Digital Signing Modal */}
+      {signingQuote && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 60,
+            padding: 16,
+          }}
+        >
+          <div
+            className="panel"
+            style={{
+              width: "100%",
+              maxWidth: 520,
+              padding: 24,
+              boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+              border: "1px solid var(--accent)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: "var(--radius)",
+                  background: "var(--accent)",
+                  color: "var(--accent-contrast)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <PenTool size={20} />
+              </div>
+              <div>
+                <h3 className="font-serif" style={{ fontSize: "var(--text-lg)", fontWeight: 700, margin: 0 }}>
+                  Department Staff Sign-off
+                </h3>
+                <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", margin: 0 }}>
+                  Quotation {signingQuote.number} • {signingQuote.productName}
+                </p>
+              </div>
+            </div>
+
+            {actionMessage && (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: "var(--radius)",
+                  background: "color-mix(in srgb, var(--success) 12%, transparent)",
+                  color: "var(--success)",
+                  fontSize: "var(--text-xs)",
+                  marginBottom: 16,
+                }}
+              >
+                {actionMessage}
+              </div>
+            )}
+
+            <div
+              style={{
+                background: "var(--table-header)",
+                borderRadius: "var(--radius)",
+                padding: "12px",
+                marginBottom: 16,
+                fontSize: "var(--text-xs)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span className="label" style={{ margin: 0 }}>Department:</span>
+                <strong style={{ color: "var(--text)" }}>
+                  {signingQuote.department || getDepartmentForProduct(signingQuote.productName).department}
+                </strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span className="label" style={{ margin: 0 }}>Plan & Total:</span>
+                <span className="font-mono" style={{ fontWeight: 600 }}>
+                  {signingQuote.planName} • {formatMoney(signingQuote.totalAmount)}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span className="label" style={{ margin: 0 }}>Department Policy:</span>
+                <span style={{ color: "var(--success)", fontWeight: 600 }}>
+                  Complies with Standard Licensing Criteria
+                </span>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleStaffSign(signingQuote.id);
+              }}
+            >
+              <div style={{ marginBottom: 14 }}>
+                <label className="label">Signing Staff Officer Name</label>
+                <input
+                  type="text"
+                  value={staffNameInput}
+                  onChange={(e) => setStaffNameInput(e.target.value)}
+                  className="input"
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: 18 }}>
+                <label className="label">Department Authorization Notes</label>
+                <textarea
+                  value={signatureNotes}
+                  onChange={(e) => setSignatureNotes(e.target.value)}
+                  className="input"
+                  rows={3}
+                  style={{ resize: "none" }}
+                  required
+                />
+              </div>
+
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: "var(--radius)",
+                  background: "color-mix(in srgb, var(--success) 10%, var(--panel))",
+                  border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)",
+                  marginBottom: 18,
+                  fontSize: "0.75rem",
+                  color: "var(--text)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <FileCheck2 size={18} color="var(--success)" style={{ flexShrink: 0 }} />
+                <span>
+                  By signing, this department certifies the pricing, terms, and software provisioning entitlement.
+                </span>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setSigningQuote(null)}
+                  className="btn-ghost"
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={actionLoading}
+                  style={{ gap: 6 }}
+                >
+                  {actionLoading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Signing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={14} /> Approve & Digitally Sign
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -245,6 +519,33 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
               >
                 <Printer size={14} /> Print
               </button>
+            </div>
+
+            {/* Department Card */}
+            <div
+              style={{
+                background: "color-mix(in srgb, var(--accent) 8%, var(--panel))",
+                border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
+                borderRadius: "var(--radius)",
+                padding: "12px 14px",
+                fontSize: "var(--text-xs)",
+              }}
+            >
+              <div style={{ fontWeight: 700, color: "var(--accent)", marginBottom: 4 }}>
+                Responsible Department: {selectedQuote.department || getDepartmentForProduct(selectedQuote.productName).department}
+              </div>
+              <div style={{ color: "var(--text-muted)" }}>
+                Staff Lead: <strong style={{ color: "var(--text)" }}>{selectedQuote.assignedStaffName || getDepartmentForProduct(selectedQuote.productName).leadStaff}</strong>
+              </div>
+              {selectedQuote.isStaffSigned ? (
+                <div style={{ marginTop: 6, color: "var(--success)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  <ShieldCheck size={14} /> Digitally Signed & Authorized by Staff
+                </div>
+              ) : (
+                <div style={{ marginTop: 6, color: "var(--warning)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                  <PenTool size={14} /> Awaiting Department Staff Digital Signature
+                </div>
+              )}
             </div>
 
             {/* Meta */}
@@ -324,22 +625,22 @@ export function PortalQuotations({ onAcceptSuccess }: Props) {
               <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 16, display: "flex", gap: 10, justifyContent: "flex-end" }}>
                 <button
                   type="button"
-                  onClick={() => handleQuoteAction(selectedQuote.id, "REJECT")}
+                  onClick={() => handleReject(selectedQuote.id)}
                   disabled={actionLoading}
                   className="btn-danger"
                   style={{ minHeight: 36, padding: "0 14px", fontSize: "var(--text-xs)" }}
                 >
-                  <XCircle size={14} /> Reject Quotation
+                  <XCircle size={14} /> Reject
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleQuoteAction(selectedQuote.id, "ACCEPT")}
+                  onClick={() => openStaffSignModal(selectedQuote)}
                   disabled={actionLoading}
                   className="btn-primary"
-                  style={{ minHeight: 36, padding: "0 16px", fontSize: "var(--text-xs)" }}
+                  style={{ minHeight: 36, padding: "0 16px", fontSize: "var(--text-xs)", gap: 6 }}
                 >
-                  {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                  Accept & Activate Subscription
+                  <PenTool size={14} />
+                  Staff Sign & Activate
                 </button>
               </div>
             )}

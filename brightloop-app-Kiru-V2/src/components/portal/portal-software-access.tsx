@@ -355,7 +355,7 @@ export function PortalSoftwareAccess({ onPayOverdue }: Props) {
               <button
                 type="button"
                 onClick={() => {
-                  alert(`Simulating launch to ${launchModal.launchUrl}`);
+                  window.open(launchModal.launchUrl, "_blank");
                   setLaunchModal(null);
                 }}
                 className="btn-primary"

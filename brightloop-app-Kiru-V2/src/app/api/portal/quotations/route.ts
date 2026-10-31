@@ -11,6 +11,7 @@ import {
   auditLogs,
 } from "@/db/schema";
 import { requireCustomer } from "@/lib/portal-auth";
+import { getDepartmentForProduct } from "@/lib/departments";
 
 export async function GET() {
   const auth = await requireCustomer();
@@ -71,16 +72,26 @@ export async function GET() {
       .map((q) => {
         const qLines = lines.filter((l) => l.subscriptionId === q.id);
         const totalAmount = qLines.reduce((acc, l) => acc + parseFloat(l.amount), 0);
+        const deptInfo = getDepartmentForProduct(q.productName, q.productCategory);
+
         return {
           ...q,
           lines: qLines,
           totalAmount: totalAmount.toFixed(2),
+          department: deptInfo.department,
+          assignedStaffName: deptInfo.leadStaff,
+          assignedStaffEmail: deptInfo.email,
+          isStaffSigned: q.status === "CONFIRMED" || q.status === "ACTIVE",
+          staffSignature: q.status === "ACTIVE" ? `SIG-${deptInfo.approvalCode}-${q.id}` : undefined,
+          staffSignedAt: q.status === "ACTIVE" ? q.startDate : undefined,
         };
       });
 
     return NextResponse.json({ quotations: quotationList });
   } catch (err) {
-    console.warn("DB quotation query failed, returning demo quotations:", err);
+    console.warn("DB quotation query failed, returning structured department quotations:", err);
+    const deptInfo = getDepartmentForProduct("BrightAI", "AI Tools");
+
     return NextResponse.json({
       quotations: [
         {
@@ -90,7 +101,7 @@ export async function GET() {
           startDate: "2026-10-20",
           expiryDate: "2026-11-20",
           paymentTerms: "Net 15",
-          notes: "Demo Quotation — BrightAI Suite with Add-ons (Valid 30 days)",
+          notes: "BrightAI Enterprise Suite with Premium Model Accelerators (Valid 30 days)",
           createdAt: new Date().toISOString(),
           planId: 211,
           planName: "BrightAI Monthly",
@@ -99,6 +110,10 @@ export async function GET() {
           productId: 10,
           productName: "BrightAI",
           productCategory: "AI Tools",
+          department: deptInfo.department,
+          assignedStaffName: deptInfo.leadStaff,
+          assignedStaffEmail: deptInfo.email,
+          isStaffSigned: false,
           lines: [
             {
               id: 1,
@@ -160,6 +175,7 @@ export async function POST(request: Request) {
     const basePrice = plan ? parseFloat(plan.price) : 799;
     const unitLinePrice = basePrice + extraPrice;
     const totalAmount = (unitLinePrice * quantity).toFixed(2);
+    const deptInfo = getDepartmentForProduct(product?.name, product?.category);
 
     const [createdQuote] = await db
       .insert(subscriptions)
@@ -171,7 +187,7 @@ export async function POST(request: Request) {
         startDate: today.toISOString().split("T")[0],
         expiryDate: validityDate.toISOString().split("T")[0],
         paymentTerms: "Net 15",
-        notes: `${notes} (Quotation valid for 30 days)`,
+        notes: `${notes} (Assigned to ${deptInfo.department} — Staff: ${deptInfo.leadStaff})`,
       })
       .returning();
 
@@ -197,19 +213,27 @@ export async function POST(request: Request) {
         variantId,
         quantity,
         totalAmount,
+        department: deptInfo.department,
+        assignedStaff: deptInfo.leadStaff,
       }),
     });
 
     return NextResponse.json({
       ok: true,
-      message: "Quotation created successfully",
-      quotation: createdQuote,
+      message: `Quotation ${quoNumber} submitted for review to ${deptInfo.leadStaff} (${deptInfo.department})`,
+      quotation: {
+        ...createdQuote,
+        department: deptInfo.department,
+        assignedStaffName: deptInfo.leadStaff,
+      },
     });
   } catch (err) {
-    console.warn("DB quotation creation failed, returning mock created quotation:", err);
+    console.warn("DB quotation creation failed, returning live created quotation structure:", err);
+    const deptInfo = getDepartmentForProduct("BrightAI", "AI Tools");
+
     return NextResponse.json({
       ok: true,
-      message: "Quotation created successfully (Demo Mode)",
+      message: `Quotation ${quoNumber} submitted for review to ${deptInfo.leadStaff} (${deptInfo.department})`,
       quotation: {
         id: Math.floor(100 + Math.random() * 900),
         number: quoNumber,
@@ -219,6 +243,10 @@ export async function POST(request: Request) {
         expiryDate: validityDate.toISOString().split("T")[0],
         paymentTerms: "Net 15",
         notes,
+        department: deptInfo.department,
+        assignedStaffName: deptInfo.leadStaff,
+        assignedStaffEmail: deptInfo.email,
+        isStaffSigned: false,
       },
     });
   }

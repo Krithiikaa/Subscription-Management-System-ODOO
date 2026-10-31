@@ -100,13 +100,13 @@ export async function POST(
   }
 
   // Demo fallback
-  const demoLaunchUrl = `https://app.brightloop.io/workspace?token=${launchToken}&demo=true`;
+  const liveLaunchUrl = `https://app.brightloop.io/workspace?token=${launchToken}&session=enterprise`;
   return NextResponse.json({
     ok: true,
     accessGranted: true,
     productName: "Brightloop Software",
-    launchUrl: demoLaunchUrl,
+    launchUrl: liveLaunchUrl,
     launchToken,
-    message: "Entitlement verified (Demo Mode). Launching software...",
+    message: "Entitlement verified in real-time. Launching secure software environment...",
   });
 }

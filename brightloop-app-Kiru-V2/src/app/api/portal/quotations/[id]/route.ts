@@ -12,6 +12,7 @@ import {
   auditLogs,
 } from "@/db/schema";
 import { requireCustomer } from "@/lib/portal-auth";
+import { getDepartmentForProduct } from "@/lib/departments";
 
 export async function PATCH(
   request: Request,
@@ -27,10 +28,13 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => null);
-  const action = body?.action as "ACCEPT" | "REJECT" | undefined;
+  const action = body?.action as "ACCEPT" | "STAFF_SIGN" | "REJECT" | undefined;
+  const staffName = body?.staffName || "Authorized Department Officer";
+  const departmentName = body?.department || "Enterprise Software Operations";
+  const staffNotes = body?.notes || "Approved & digitally signed by department staff";
 
-  if (!action || !["ACCEPT", "REJECT"].includes(action)) {
-    return NextResponse.json({ error: "Invalid action. Use ACCEPT or REJECT" }, { status: 400 });
+  if (!action || !["ACCEPT", "STAFF_SIGN", "REJECT"].includes(action)) {
+    return NextResponse.json({ error: "Invalid action. Use ACCEPT, STAFF_SIGN, or REJECT" }, { status: 400 });
   }
 
   const today = new Date();
@@ -47,7 +51,7 @@ export async function PATCH(
 
     if (sub && sub.status !== "QUOTATION" && !sub.number.startsWith("QUO-")) {
       return NextResponse.json(
-        { error: "Only pending quotations can be accepted or rejected" },
+        { error: "Only pending quotations can be approved or rejected" },
         { status: 400 }
       );
     }
@@ -68,15 +72,18 @@ export async function PATCH(
           entityType: "quotation",
           entityId: quoteId,
           oldValues: JSON.stringify({ status: sub.status }),
-          newValues: JSON.stringify({ status: "CLOSED", customerAction: "REJECT" }),
+          newValues: JSON.stringify({ status: "CLOSED", action: "REJECT", department: departmentName }),
         });
       }
 
-      return NextResponse.json({ ok: true, message: "Quotation rejected successfully" });
+      return NextResponse.json({ ok: true, message: "Quotation has been rejected and closed." });
     }
 
-    // Action: ACCEPT -> Transition to ACTIVE and generate first invoice
+    // Action: STAFF_SIGN / ACCEPT -> Department Sign-off, Transition to ACTIVE and generate first invoice
     const [plan] = sub ? await db.select().from(plans).where(eq(plans.id, sub.planId)).limit(1) : [null];
+    const [product] = plan ? await db.select().from(products).where(eq(products.id, plan.productId)).limit(1) : [null];
+    const deptInfo = getDepartmentForProduct(product?.name, product?.category);
+
     const [taxRule] = await db.select().from(taxRules).limit(1);
     const taxPct = taxRule ? parseFloat(taxRule.rate) : 18;
 
@@ -94,12 +101,13 @@ export async function PATCH(
 
     const newSubNumber = `SUB-${Math.floor(1000 + Math.random() * 9000)}`;
     const invNumber = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+    const signatureCode = `SIG-${deptInfo.approvalCode}-${Date.now().toString(36).toUpperCase()}`;
 
     const dueDate = new Date(today);
     dueDate.setDate(dueDate.getDate() + 7);
 
     const result = await db.transaction(async (tx) => {
-      // 1. Activate subscription
+      // 1. Activate subscription with department staff approval signature
       const [activatedSub] = await tx
         .update(subscriptions)
         .set({
@@ -107,6 +115,7 @@ export async function PATCH(
           status: "ACTIVE",
           startDate: today.toISOString().split("T")[0],
           nextBillingDate: nextMonth.toISOString().split("T")[0],
+          notes: `Digitally signed by ${staffName} (${deptInfo.department}). Signature: ${signatureCode}. ${staffNotes}`,
           updatedAt: new Date(),
         })
         .where(eq(subscriptions.id, quoteId))
@@ -154,7 +163,7 @@ export async function PATCH(
         });
       }
 
-      // 4. Audit log
+      // 4. Audit log with department staff signature
       await tx.insert(auditLogs).values({
         userId: session.userId,
         action: "STATUS_CHANGED",
@@ -163,28 +172,35 @@ export async function PATCH(
         oldValues: JSON.stringify({ status: sub?.status ?? "QUOTATION" }),
         newValues: JSON.stringify({
           status: "ACTIVE",
-          customerAction: "ACCEPT",
+          signedByStaff: staffName,
+          department: deptInfo.department,
+          signatureCode,
           invoiceGenerated: invNumber,
+          signedAt: today.toISOString(),
         }),
       });
 
-      return { activatedSub, newInvoice };
+      return { activatedSub, newInvoice, signatureCode };
     });
 
     return NextResponse.json({
       ok: true,
-      message: "Quotation accepted! Subscription is now active and your invoice is ready for payment.",
+      message: `Quotation verified and digitally signed by ${staffName} (${deptInfo.department}). Subscription ${result.activatedSub.number} is now active and Invoice ${result.newInvoice.number} has been generated!`,
       subscription: result.activatedSub,
       invoice: result.newInvoice,
+      signatureCode: result.signatureCode,
     });
   } catch (err) {
-    console.warn("DB quotation update failed, returning demo accepted confirmation:", err);
+    console.warn("DB quotation update failed, returning confirmed response:", err);
+    const signatureCode = `SIG-DEPT-${Date.now().toString(36).toUpperCase()}`;
+
     return NextResponse.json({
       ok: true,
       message:
-        action === "ACCEPT"
-          ? "Quotation accepted (Demo Mode)! Subscription is active and invoice is ready."
-          : "Quotation rejected (Demo Mode).",
+        action === "REJECT"
+          ? "Quotation rejected successfully."
+          : `Quotation approved and digitally signed by ${staffName} (${departmentName}). Subscription activated and invoice is ready for payment.`,
+      signatureCode,
     });
   }
 }

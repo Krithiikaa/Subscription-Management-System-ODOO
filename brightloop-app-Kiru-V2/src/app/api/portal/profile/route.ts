@@ -60,7 +60,7 @@ export async function PATCH(request: Request) {
       ok: true,
       customer: {
         id: customerId,
-        companyName: companyName || "Brightloop Demo Customer Corp",
+        companyName: companyName || session.name || "",
         phone: phone || "+91 98765 43210",
         address: address || "123 Tech Park, Bengaluru",
         name: name ?? session.name,

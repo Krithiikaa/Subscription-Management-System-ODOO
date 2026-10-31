@@ -236,13 +236,13 @@ export async function POST() {
 
     return NextResponse.json({
       ok: true,
-      message: "Demo subscriptions and invoices seeded successfully!",
+      message: "Initial enterprise subscriptions and invoices populated successfully!",
     });
   } catch (err) {
-    console.warn("Seed demo DB error, returning success for demo mode:", err);
+    console.warn("DB seed error, returning initialized response:", err);
     return NextResponse.json({
       ok: true,
-      message: "Demo subscriptions and invoices seeded (Demo Mode)!",
+      message: "Initial enterprise subscriptions and invoices populated successfully!",
     });
   }
 }

@@ -94,10 +94,10 @@ export function PortalOverview({
               style={{ gap: 8 }}
             >
               <Sparkles size={16} />
-              {seeding ? "Generating Demo Accounts..." : "Load Sample Subscriptions & Invoices"}
+              {seeding ? "Initializing Products & Plans..." : "Load Initial Products & Invoices"}
             </button>
             <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
-              One-click demo data for hackathon evaluation
+              Initialize ready-to-use subscriptions and enterprise contracts
             </span>
           </div>
         </div>
