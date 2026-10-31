@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema } from "@/lib/validation";
+import { AuthShell } from "@/components/layout/auth-shell";
+import { PasswordInput } from "@/components/shared/password-input";
 import type { z } from "zod";
 
 type FormValues = z.infer<typeof resetPasswordSchema>;
@@ -59,21 +61,11 @@ function ResetPasswordForm() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-      }}
-    >
-      <div className="panel" style={{ padding: "32px", maxWidth: "380px", width: "100%" }}>
-        <p className="label">Reset password</p>
-        <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "var(--text-2xl)", fontWeight: 700, margin: "4px 0 20px" }}>
-          Brightloop
-        </h1>
+    <AuthShell>
+      <h2 className="auth-form-heading">Reset password</h2>
+      <p className="auth-form-subtitle">Choose a new password for your account.</p>
 
+      <div style={{ marginTop: "24px" }}>
         {!token ? (
           <p style={{ color: "var(--danger)", fontSize: "var(--text-sm)" }}>
             Missing or invalid reset link. Request a new one from the{" "}
@@ -92,13 +84,13 @@ function ResetPasswordForm() {
 
             <div>
               <label className="label" htmlFor="password">New password</label>
-              <input id="password" type="password" className="input" autoComplete="new-password" {...register("password")} />
+              <PasswordInput id="password" autoComplete="new-password" {...register("password")} />
               {errors.password && <p style={{ color: "var(--danger)", fontSize: "var(--text-xs)", marginTop: "4px" }}>{errors.password.message}</p>}
             </div>
 
             <div>
               <label className="label" htmlFor="confirmPassword">Confirm new password</label>
-              <input id="confirmPassword" type="password" className="input" autoComplete="new-password" {...register("confirmPassword")} />
+              <PasswordInput id="confirmPassword" autoComplete="new-password" {...register("confirmPassword")} />
               {errors.confirmPassword && <p style={{ color: "var(--danger)", fontSize: "var(--text-xs)", marginTop: "4px" }}>{errors.confirmPassword.message}</p>}
             </div>
 
@@ -107,11 +99,11 @@ function ResetPasswordForm() {
             </button>
           </form>
         )}
-
-        <div style={{ marginTop: "20px", fontSize: "var(--text-xs)" }}>
-          <Link href="/login" style={{ color: "var(--text-muted)" }}>Back to sign in</Link>
-        </div>
       </div>
-    </main>
+
+      <div style={{ marginTop: "20px", fontSize: "var(--text-xs)" }}>
+        <Link href="/login" style={{ color: "var(--text-muted)" }}>Back to sign in</Link>
+      </div>
+    </AuthShell>
   );
 }
