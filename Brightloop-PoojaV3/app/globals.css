@@ -2,59 +2,77 @@
 
 @layer base {
   :root {
-    --background: #F8FAFC;
+    /* Crextio / Nixtio Warm Organic Palette */
+    --background: #8E9AA8; /* Slate canvas frame */
+    --canvas-bg: #8E9AA8;
+    --app-surface: #FCFDFD;
     --surface: #FFFFFF;
-    --surface-muted: #F1F5F9;
-    --border: #E2E8F0;
-    --text: #0F172A;
-    --text-muted: #64748B;
-    --primary: #4F46E5;
-    --primary-hover: #4338CA;
-    --primary-soft: #EEF2FF;
-    --accent: #14B8A6;
+    --surface-muted: #F8F9FA;
+    --border: #EEF2F6;
+    --border-dark: #2A303A;
+    --text: #181D24;
+    --text-muted: #6B7280;
+    
+    /* Warm Honey & Charcoal Accents */
+    --primary: #181D24; /* Matte Dark Charcoal */
+    --primary-hover: #262D37;
+    --accent-yellow: #FBBF24; /* Warm Sunny Yellow */
+    --accent-yellow-light: #FEF7D9;
+    --accent-yellow-soft: #FDE68A;
+    --accent-dark: #181D24;
     
     /* Card & input styles */
     --card: #FFFFFF;
-    --card-foreground: #0F172A;
+    --card-foreground: #181D24;
+    --card-dark: #181D24;
+    --card-dark-foreground: #FFFFFF;
     --popover: #FFFFFF;
-    --popover-foreground: #0F172A;
-    --muted: #F1F5F9;
-    --muted-foreground: #64748B;
+    --popover-foreground: #181D24;
+    --muted: #F3F4F6;
+    --muted-foreground: #6B7280;
     --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
-    --input: #E2E8F0;
-    --ring: #4F46E5;
-    --radius: 0.75rem; /* 12px */
+    --input: #E5E7EB;
+    --ring: #FBBF24;
+    --radius: 1.5rem; /* 24px rounded corners */
   }
 
   .dark {
-    --background: #0B1020;
-    --surface: #111827;
-    --surface-muted: #1F2937;
-    --border: #263248;
-    --text: #E5E7EB;
-    --text-muted: #94A3B8;
-    --primary: #818CF8;
-    --primary-hover: #A5B4FC;
-    --primary-soft: rgba(79, 70, 229, 0.15);
-    --accent: #2DD4BF;
+    --background: #0B0E14;
+    --canvas-bg: #0B0E14;
+    --app-surface: #12161E;
+    --surface: #181D26;
+    --surface-muted: #1E2430;
+    --border: #232A36;
+    --border-dark: #2A3342;
+    --text: #F3F4F6;
+    --text-muted: #9CA3AF;
     
-    --card: #111827;
-    --card-foreground: #E5E7EB;
-    --popover: #111827;
-    --popover-foreground: #E5E7EB;
-    --muted: #1F2937;
-    --muted-foreground: #94A3B8;
+    --primary: #FBBF24;
+    --primary-hover: #FCD34D;
+    --accent-yellow: #FBBF24;
+    --accent-yellow-light: rgba(251, 191, 36, 0.15);
+    --accent-yellow-soft: rgba(251, 191, 36, 0.25);
+    --accent-dark: #0F131A;
+    
+    --card: #181D26;
+    --card-foreground: #F3F4F6;
+    --card-dark: #0F131A;
+    --card-dark-foreground: #F3F4F6;
+    --popover: #181D26;
+    --popover-foreground: #F3F4F6;
+    --muted: #1E2430;
+    --muted-foreground: #9CA3AF;
     --destructive: #DC2626;
     --destructive-foreground: #FFFFFF;
-    --input: #263248;
-    --ring: #818CF8;
+    --input: #232A36;
+    --ring: #FBBF24;
   }
 }
 
 /* Base resets & typography */
 body {
-  background-color: var(--background);
+  background-color: var(--canvas-bg);
   color: var(--text);
   font-family: var(--font-montserrat), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -82,27 +100,22 @@ code, .font-mono, pre {
   font-variant-numeric: tabular-nums;
 }
 
-/* Soft shadows per spec */
-.shadow-soft {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
+/* Crextio Warm Gradient Surface */
+.crextio-surface {
+  background: radial-gradient(circle at 90% 80%, #FEF5D0 0%, #FFFCEF 35%, #FDFEFE 70%, #F8FAFC 100%);
 }
 
-.shadow-glow {
-  box-shadow: 0 0 25px -5px rgba(79, 70, 229, 0.25);
+.dark .crextio-surface {
+  background: radial-gradient(circle at 90% 80%, rgba(251, 191, 36, 0.08) 0%, #151A22 45%, #10141B 100%);
 }
 
-.hero-gradient {
-  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #7C3AED 100%);
+/* Soft delicate shadow */
+.shadow-crextio {
+  box-shadow: 0 4px 20px -2px rgba(24, 29, 36, 0.03), 0 2px 6px -1px rgba(24, 29, 36, 0.02);
 }
 
-.card-glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-}
-
-.dark .card-glass {
-  background: rgba(17, 24, 39, 0.85);
-  backdrop-filter: blur(12px);
+.shadow-crextio-lg {
+  box-shadow: 0 20px 40px -15px rgba(24, 29, 36, 0.08), 0 0 1px 1px rgba(24, 29, 36, 0.04);
 }
 
 /* Print Stylesheet for Invoices */

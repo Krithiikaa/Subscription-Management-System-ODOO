@@ -10,11 +10,9 @@ import {
   Shield,
   Briefcase,
   User,
-  CheckCircle2,
-  ShieldCheck,
-  Zap,
   ArrowRight,
   Sparkles,
+  CheckCircle2,
   Lock,
 } from "lucide-react";
 
@@ -28,9 +26,6 @@ interface RolePreset {
   email: string;
   password: string;
   targetDashboard: string;
-  themeColor: string;
-  badgeClass: string;
-  icon: any;
 }
 
 const ROLE_PRESETS: Record<RoleType, RolePreset> = {
@@ -42,9 +37,6 @@ const ROLE_PRESETS: Record<RoleType, RolePreset> = {
     email: "admin@brightloop.io",
     password: "BrightLoop@2026",
     targetDashboard: "/admin/dashboard",
-    themeColor: "indigo",
-    badgeClass: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
-    icon: Shield,
   },
   STAFF: {
     role: "STAFF",
@@ -54,9 +46,6 @@ const ROLE_PRESETS: Record<RoleType, RolePreset> = {
     email: "staff.arun@brightloop.io",
     password: "BrightLoop@2026",
     targetDashboard: "/staff/dashboard",
-    themeColor: "blue",
-    badgeClass: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800",
-    icon: Briefcase,
   },
   CUSTOMER: {
     role: "CUSTOMER",
@@ -66,9 +55,6 @@ const ROLE_PRESETS: Record<RoleType, RolePreset> = {
     email: "contact@apexretail.in",
     password: "BrightLoop@2026",
     targetDashboard: "/portal/subscriptions",
-    themeColor: "emerald",
-    badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-    icon: User,
   },
 };
 
@@ -113,100 +99,65 @@ export default function LoginPage() {
   };
 
   const currentPreset = ROLE_PRESETS[activeRole];
-  const ActiveIcon = currentPreset.icon;
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 dark:bg-slate-950 font-sans">
-      {/* Left Branded Hero Panel */}
-      <div className="lg:w-5/12 hero-gradient p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
-        {/* Top Logo */}
-        <div className="space-y-6 z-10">
-          <Link href="/" className="inline-flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center font-heading font-extrabold text-2xl text-white shadow-soft">
-              B
-            </div>
-            <div className="flex flex-col">
-              <span className="font-heading font-bold text-2xl tracking-tight text-white">
+    <div className="min-h-screen p-4 sm:p-8 flex items-center justify-center bg-[#8E9AA8] dark:bg-[#0B0E14] font-sans transition-colors">
+      {/* Crextio Warm Rounded Container */}
+      <div className="w-full max-w-4xl rounded-[2.5rem] crextio-surface border border-white/60 dark:border-slate-800 shadow-2xl overflow-hidden p-6 sm:p-10 flex flex-col md:flex-row gap-8">
+        {/* Left Side: Welcome & Brand Overview */}
+        <div className="md:w-5/12 flex flex-col justify-between space-y-6">
+          <div className="space-y-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+              <span className="font-heading font-bold text-sm tracking-tight text-slate-900 dark:text-white">
                 BrightLoop
               </span>
-              <span className="text-[11px] text-indigo-100 tracking-wider uppercase font-semibold">
-                Subscription Engine V2
-              </span>
-            </div>
-          </Link>
+            </Link>
 
-          <div className="pt-12 sm:pt-16 space-y-4 max-w-md">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-medium text-indigo-100">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Full lifecycle subscription platform</span>
+            <div className="pt-4 space-y-2">
+              <h1 className="text-3xl font-light tracking-tight text-slate-900 dark:text-white">
+                Welcome in, <span className="font-semibold block">Subscriber</span>
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Single unified platform covering Product Catalog → Plans → Quotes → Subscriptions → Invoicing → Automated Billing.
+              </p>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-              Orchestrate revenue with <span className="font-serif italic font-normal text-white">precision</span>.
-            </h1>
-            <p className="text-indigo-100 text-sm sm:text-base leading-relaxed">
-              Product catalog, customized quotation templates, automated cron billing, and server-isolated customer portals.
-            </p>
+            {/* Checklist */}
+            <div className="space-y-2.5 pt-4 text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Idempotent billing & month-end clamping</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Strict server-side customer isolation</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Real-time MRR & revenue analytics</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-200/60 dark:border-slate-800 pt-4">
+            <span>© 2026 BrightLoop</span>
+            <ThemeToggle />
           </div>
         </div>
 
-        {/* Feature Highlights */}
-        <div className="space-y-4 max-w-md pt-8 z-10">
-          <div className="flex items-center gap-3 text-sm text-indigo-50">
-            <div className="p-1 rounded-full bg-white/20 shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-            </div>
-            <span>Month-end clamped, idempotent billing engine</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-indigo-50">
-            <div className="p-1 rounded-full bg-white/20 shrink-0">
-              <ShieldCheck className="w-4 h-4 text-emerald-300" />
-            </div>
-            <span>Server-side tenant isolation & strict role security</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm text-indigo-50">
-            <div className="p-1 rounded-full bg-white/20 shrink-0">
-              <Zap className="w-4 h-4 text-emerald-300" />
-            </div>
-            <span>Sub-2 second SQL aggregate revenue metrics</span>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="pt-8 text-xs text-indigo-200 z-10 flex items-center justify-between">
-          <span>© 2026 BrightLoop Technologies Inc.</span>
-          <span className="font-mono text-[11px] opacity-75">v2.0-Production</span>
-        </div>
-
-        {/* Decorative backdrop glow */}
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl pointer-events-none" />
-      </div>
-
-      {/* Right Form Card with 3 Role Tabs */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 lg:p-16">
-        {/* Top bar with Theme Toggle */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Select your portal to sign in:
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline">Theme:</span>
-            <div className="p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-300/40 dark:border-slate-700/40 shadow-sm">
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-
-        <div className="w-full max-w-lg mx-auto space-y-6">
-          {/* Role Selector Tabs (3 Roles) */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">
-              Choose Workspace Role
-            </label>
-            <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        {/* Right Side: 3-Role Interactive Sign-In Card */}
+        <div className="flex-1 p-6 sm:p-8 rounded-[2rem] bg-white dark:bg-[#181D26] border border-slate-200/80 dark:border-slate-800 shadow-crextio space-y-5">
+          {/* Role Tabs */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              Select Workspace Portal
+            </span>
+            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80">
               {(["ADMIN", "STAFF", "CUSTOMER"] as RoleType[]).map((role) => {
-                const preset = ROLE_PRESETS[role];
-                const Icon = preset.icon;
                 const isSelected = activeRole === role;
 
                 return (
@@ -214,128 +165,104 @@ export default function LoginPage() {
                     key={role}
                     type="button"
                     onClick={() => handleRoleSelect(role)}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                    className={`py-2 px-1 text-xs font-semibold rounded-xl transition-all duration-150 ${
                       isSelected
-                        ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200 dark:border-slate-700 scale-[1.02]"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                        ? "bg-[#181D24] text-white dark:bg-amber-400 dark:text-slate-900 shadow-sm"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isSelected ? "text-indigo-600 dark:text-indigo-400" : ""}`} />
-                    <span>{role === "ADMIN" ? "Admin" : role === "STAFF" ? "Staff" : "Customer"}</span>
+                    {role === "ADMIN" ? "Admin" : role === "STAFF" ? "Staff" : "Customer"}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Active Role Info Card with 1-Click Demo Fill */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-soft space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-                  <ActiveIcon className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-heading font-bold text-sm text-slate-900 dark:text-slate-100">
-                    {currentPreset.title}
-                  </h3>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${currentPreset.badgeClass}`}>
-                    {currentPreset.badge}
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="text-xs h-7 gap-1 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400"
-                onClick={() => {
-                  setEmail(currentPreset.email);
-                  setPassword(currentPreset.password);
-                }}
-              >
-                <Sparkles className="w-3 h-3 text-amber-500" /> Autofill Demo
-              </Button>
+          {/* Preset Spotlight Info with 1-Click Autofill */}
+          <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold text-slate-900 dark:text-amber-300 block">
+                {currentPreset.title}
+              </span>
+              <span className="text-[10px] text-slate-500 dark:text-amber-400/80">
+                {currentPreset.badge}
+              </span>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              {currentPreset.description}
-            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-[11px] h-7 gap-1 rounded-full border-amber-300 dark:border-amber-700 text-slate-800 dark:text-amber-300 hover:bg-amber-100"
+              onClick={() => {
+                setEmail(currentPreset.email);
+                setPassword(currentPreset.password);
+              }}
+            >
+              <Sparkles className="w-3 h-3 text-amber-500" /> Autofill Demo
+            </Button>
           </div>
 
           {/* Error Banner */}
           {error && (
-            <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span>{error}</span>
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 text-xs text-rose-600">
+              {error}
             </div>
           )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Email Address
+                Email
               </label>
               <Input
                 type="email"
                 required
-                placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className="h-11 rounded-xl"
+                placeholder="name@company.com"
+                className="h-10 rounded-xl"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Password
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                  className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 >
-                  Forgot password?
+                  Forgot?
                 </Link>
               </div>
               <Input
                 type="password"
                 required
-                placeholder="•••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                className="h-11 rounded-xl"
+                placeholder="•••••••••"
+                className="h-10 rounded-xl"
               />
             </div>
 
             <Button
               type="submit"
-              className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-sm gap-2"
+              className="w-full h-10 rounded-xl bg-[#181D24] hover:bg-slate-800 text-white dark:bg-amber-400 dark:hover:bg-amber-500 dark:text-slate-900 font-bold text-xs shadow-sm gap-2 mt-2"
               isLoading={loading}
             >
-              Sign In to {currentPreset.title} <ArrowRight className="w-4 h-4" />
+              Sign In as {currentPreset.title} <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           </form>
 
-          {/* Sign Up Footer */}
-          <div className="pt-2 text-center text-xs text-slate-500 dark:text-slate-400">
-            Need a new organization subscription?{" "}
-            <Link
-              href="/signup"
-              className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
-              Register Customer Portal
+          <div className="text-center text-xs text-slate-400 pt-1">
+            New customer?{" "}
+            <Link href="/signup" className="font-semibold text-slate-900 dark:text-white underline">
+              Create account
             </Link>
           </div>
-        </div>
-
-        {/* Subtle footer */}
-        <div className="text-center pt-8 text-[11px] text-slate-400 dark:text-slate-600">
-          Secure JWT HttpOnly authentication • Strict Server-Side RBAC
         </div>
       </div>
     </div>
