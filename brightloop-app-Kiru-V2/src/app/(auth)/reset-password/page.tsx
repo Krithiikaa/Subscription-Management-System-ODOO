@@ -70,7 +70,7 @@ function ResetPasswordForm() {
     >
       <div className="panel" style={{ padding: "32px", maxWidth: "380px", width: "100%" }}>
         <p className="label">Reset password</p>
-        <h1 style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-xl)", margin: "4px 0 20px" }}>
+        <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "var(--text-2xl)", fontWeight: 700, margin: "4px 0 20px" }}>
           Brightloop
         </h1>
 

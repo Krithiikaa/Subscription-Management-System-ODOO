@@ -62,6 +62,21 @@ Repo: `github.com/Krithiikaa/Subscription-Management-System-ODOO`
 ### Demo credentials
 Seeded via `npm run db:seed` — passwords were randomly generated and printed once to the terminal (not committed anywhere). Admin email: `admin.brightloopoddohack@gmail.com`.
 
+## UI Redesign — Concept A "Premium Golden" (✅ Complete)
+
+Per your explicit design directive (superseding Phase 0's original dark-terminal-first UI direction): light-mode-primary, golden amber (#E5A50A) accent, Montserrat + Playfair Display + JetBrains Mono. Implemented as a token swap in `globals.css` plus new layout chrome — most existing component markup re-themes automatically since it was already built against CSS custom properties rather than hardcoded colors.
+
+- Rewrote design tokens: light theme is now the default (`:root`), dark theme via `[data-theme="dark"]` or `prefers-color-scheme`, restrained success/danger/warning mapped to Emerald/Coral/Amber.
+- Built `ThemeToggle` and `ReducedMotionToggle` client components (persisted to `localStorage`) — these were spec'd in Phase 0 but never actually built until now.
+- Built `AdminShell` (sidebar + topbar layout) for `/admin/*` — nav items are role-aware (Staff only sees Dashboard; Admin also sees Staff) and reflect only routes that actually exist; no dead links to not-yet-built modules.
+- Restyled buttons/badges/tables per the "restrained minimalism" brief (e.g. `.btn-danger` is now a tinted outline instead of a solid fill).
+- Updated landing page and all four auth pages for the new palette/typography.
+- Verified end-to-end after the change: build + 22 Vitest tests pass, and re-ran the full login/role-nav/access-control check (admin sees Staff nav + page, staff doesn't see the link and gets 403 hitting it directly, customer portal unaffected).
+
+**Caveat:** I verified this via build output, compiled CSS (grepped for the new hex values and font names) and HTTP/HTML structure — I do not have browser screenshot capability in this environment, so I have not visually inspected it rendered. Worth a quick look at https://brightloop-app.vercel.app once deployed to confirm it reads the way you intended.
+
+**Scope note:** most "modules" in your redesign brief (catalog, subscriptions, invoices, payments, product-wise staff assignment) don't exist in code yet — only Phase 0 (scaffold) and Phase 1 (auth) are built. Those pages will inherit these tokens automatically when built in Phases 2–6; there was nothing to redesign for them yet.
+
 ## Not Yet Done (Phases 2–7)
 
 | Phase | Scope |

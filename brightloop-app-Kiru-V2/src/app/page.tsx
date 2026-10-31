@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export default function HomePage() {
   return (
@@ -11,76 +12,58 @@ export default function HomePage() {
         justifyContent: "center",
         gap: "24px",
         padding: "24px",
+        position: "relative",
       }}
     >
-      {/* Wordmark */}
+      <div style={{ position: "absolute", top: 20, right: 20 }}>
+        <ThemeToggle />
+      </div>
+
       <div style={{ textAlign: "center" }}>
         <div
           style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "var(--text-xs)",
-            color: "var(--accent)",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            marginBottom: "8px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            background: "var(--accent)",
+            color: "var(--accent-contrast)",
+            marginBottom: "16px",
           }}
         >
-          ◈ brightloop
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M8 12c-2.5 0-4-2-4-4s1.5-4 4-4 4 2 4 4-1.5 4-4 4z" />
+            <path d="M16 12c2.5 0 4 2 4 4s-1.5 4-4 4-4-2-4-4 1.5-4 4-4z" />
+          </svg>
         </div>
         <h1
+          className="font-serif"
           style={{
-            fontFamily: "var(--font-mono)",
             fontSize: "var(--text-3xl)",
             color: "var(--text)",
-            fontWeight: 600,
+            fontWeight: 700,
             margin: 0,
           }}
         >
-          Subscription Management
+          Brightloop
         </h1>
         <p
           style={{
             color: "var(--text-muted)",
-            marginTop: "12px",
+            marginTop: "10px",
             fontSize: "var(--text-base)",
-            maxWidth: "480px",
+            maxWidth: "440px",
           }}
         >
-          One platform to run plans, subscriptions and recurring billing —
-          end to end.
+          One platform to run plans, subscriptions and recurring billing — end to end.
         </p>
       </div>
 
-      {/* Status pill */}
-      <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "6px 14px",
-          border: "1px solid var(--hairline)",
-          borderRadius: "999px",
-          fontFamily: "var(--font-mono)",
-          fontSize: "var(--text-xs)",
-          color: "var(--text-muted)",
-        }}
-      >
-        <span
-          style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            background: "var(--accent)",
-            display: "inline-block",
-          }}
-        />
-        Phase 0 — scaffold deployed
-      </div>
-
-      {/* CTA */}
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
         <Link href="/login" className="btn-primary">
-          Sign in →
+          Sign in
         </Link>
         <Link href="/signup" className="btn-ghost">
           Create account
