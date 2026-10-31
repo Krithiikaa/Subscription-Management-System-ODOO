@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: roleEnum("role").notNull().default("CUSTOMER"),
   name: varchar("name", { length: 255 }).notNull(),
+  active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -50,6 +51,18 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   usedAt: timestamp("used_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ─── Login Attempts (rate limiting) ───────────────────────────────────────────
+
+export const loginAttempts = pgTable("login_attempts", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull(),
+  ip: varchar("ip", { length: 64 }),
+  success: boolean("success").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  emailCreatedAtIdx: index("login_attempts_email_created_at_idx").on(sql`lower(${t.email})`, t.createdAt),
+}));
 
 // ─── Customers ────────────────────────────────────────────────────────────────
 
@@ -286,6 +299,8 @@ export const auditLogs = pgTable("audit_logs", {
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type LoginAttempt = typeof loginAttempts.$inferSelect;
 export type Customer = typeof customers.$inferSelect;
 export type NewCustomer = typeof customers.$inferInsert;
 export type Product = typeof products.$inferSelect;
