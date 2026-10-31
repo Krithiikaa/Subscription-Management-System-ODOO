@@ -142,13 +142,52 @@ Full workflow: Product+Plan → Quotation Template → Quotation → Customer Ap
 
 **Known limitations / design decisions**: no dedicated endpoint reaches the subscription `QUOTATION` status (that concept is now owned by the real Quotation entity) — direct admin-created subscriptions fast-track `DRAFT`→`CONFIRMED`; no automated route-handler tests (none existed to extend, covered by live smoke testing instead).
 
-## Not Yet Done (Phases 4–7)
+## Phase 4 — Automated Billing + Invoices (✅ Complete)
+
+- **Schema**: `invoice_status` enum gained `PARTIALLY_PAID`; `invoices` gained `cancelReason`/`cancelledAt`/`cancelledBy`/`dueSoonReminderSentAt`/`overdueReminderSentAt`; `invoice_lines` gained the same historical-snapshot columns `subscription_lines` already had (`planId`, `productName`, `variantName`, `planName`, `billingPeriod`) so an invoice stays accurate even if the catalogue changes later. All additive — verified via `psql` before and after.
+- **Bug fixed in shared code**: `advanceBillingDate` (`src/lib/utils.ts`), used by Phase 3's confirm/renew/convert flows, used raw `Date#setMonth` which overflows past month-end (Jan 31 + 1 month → Mar 3, not Feb 28). Replaced with `date-fns`'s `addMonths`/`addYears`/`addWeeks`/`addDays`, which clamp correctly — same signature, Phase 3 call sites untouched, now correct for all of them too. 5 new tests cover Jan-31 in a leap and non-leap year, a year-boundary crossing, and a leap-day YEARLY advance.
+- **Billing engine** (`src/lib/billing-engine.ts`): `runBillingCycle` pages through `ACTIVE` subscriptions with `nextBillingDate <= today` (reusing the Phase 0 composite index) in bounded batches, generating one invoice per subscription per billing cycle inside its own transaction — one failure never blocks the rest of the batch. Duplicate-invoice prevention is enforced by the DB's existing unique index on `(subscriptionId, periodStart)` via `onConflictDoNothing`, with a second conditional-update guard on `nextBillingDate` as belt-and-suspenders. Invoice lines are copied verbatim from the subscription's locked snapshot — never re-priced against current catalogue state. Supports a `dryRun` mode for previewing a run before committing it.
+- **API**: `POST /api/billing/run` (admin manual/preview trigger), `GET /api/cron/billing` (protected by `CRON_SECRET` via `src/lib/cron-auth.ts`, matches the `/api/cron/*` route already pre-provisioned in `vercel.json`), full `GET/POST /api/invoices*` CRUD (role-scoped: admin all, staff via assigned products, customer via own records) plus `cancel` (only from `CONFIRMED`, since cancelling a partially/fully paid invoice would need an un-invented refund policy).
+- **UI**: new "Billing" admin nav group; `/admin/invoices` (filters, overdue flag, cancel action, "Run billing now" with dry-run preview); `/portal/invoices` (customer view, replaces the old "Invoices will appear here in a later phase" placeholder).
+- **Verified live against the real Neon DB**: created a real subscription, ran billing, confirmed exactly one invoice was created; re-ran billing immediately — confirmed **zero** duplicate invoices (idempotency holds); ran again after manually advancing to the next period — confirmed a second, distinct invoice was created correctly.
+- **Tests**: 14 new (pure functions only, no DB — matches the existing test convention).
+
+## Phase 5 — Demo Payments (✅ Complete)
+
+- **Schema**: `payments` gained `customerId`, `status` (SUCCESS/FAILED/PENDING), `sessionId`, `transactionRef`, `failureReason`, `recordedBy`. New `payment_sessions` table (sessionRef, invoiceId, customerId, amount snapshot, status, expiresAt, completedPaymentId). `payment_method` enum gained `NETBANKING`/`WALLET`.
+- **Engine** (`src/lib/payment-engine.ts`): `createPaymentSession` snapshots the invoice's authoritative outstanding balance at session creation (customer never supplies an amount). `completePaymentSession` claims the session atomically (`UPDATE ... WHERE status='PENDING'`, the same race-guard pattern Phase 3's quotation-accept uses) so a double-submit is always idempotent; checks expiry before claiming; and — found and fixed during review — re-checks the invoice's **live** outstanding balance immediately before applying a successful payment (not just the stale session-creation snapshot), returning a clean `already_settled` result instead of risking a second concurrent session trying to overpay an already-settled invoice. `recordManualPayment` is the path that actually exercises partial and multiple-partial payments (the demo customer checkout always settles the session's full snapshotted amount, matching normal checkout UX; manual recording is where an admin/staff can apply a smaller amount, validated against the live outstanding, which is how `PARTIALLY_PAID → PAID` over several payments is really tested).
+- **QR checkout**: `qrcode` (new dependency) generates a data-URL QR encoding the demo checkout URL; the checkout page re-validates the session server-side on load (ownership + expiry) — nothing sensitive is encoded in the QR itself.
+- **API**: `POST /api/payments/sessions`, `GET/POST /api/payments/sessions/[ref]` + `/complete`, `GET /api/payments` (role-scoped), `POST /api/payments/manual` (admin/staff).
+- **UI**: `/portal/checkout/new` → `/portal/checkout/[sessionRef]` — a clearly labeled `DEMO MODE — NO REAL MONEY WILL BE TRANSFERRED` checkout with method selection (UPI/Card/NetBanking/Wallet) and Success/Failure/Pending outcome buttons (this is a simulation, by explicit design — no real card/UPI details are ever collected); `/portal/payments` (history); `/admin/payments` (list + manual payment recording drawer). Invoice detail views gained a "Pay Now" action.
+- **Verified live**: full activate → bill → pay (SUCCESS) → invoice `PAID` → duplicate-completion attempt on the same session correctly returned `already_processed` with no second payment row created.
+- **Tests**: 12 new (pure functions only).
+
+## Phase 6a — Software Access Entitlements (✅ Complete)
+
+- **Schema**: `products.demoAccessUrl` (admin-configurable); new `software_entitlements` table, one row per subscription line (unique), tracking PENDING/ACTIVE/SUSPENDED/EXPIRED/REVOKED independently of both payment status and subscription status, exactly per the brief's "payment status ≠ subscription status ≠ access status" requirement.
+- **Sync** (`src/lib/entitlements.ts`): `syncEntitlementsForSubscription` is called from inside the *existing* Phase 3 activate/pause/resume/close transactions (one extra line each, no new workflow) — ACTIVE syncs entitlements to ACTIVE (snapshotting `demoAccessUrl` on first activation only, never re-snapshotting), PAUSED → SUSPENDED, CLOSED → REVOKED. `isEntitlementUsable()` is the single server-side gate (ACTIVE + not expired) — the frontend never decides launch eligibility on its own.
+- **API/UI**: `GET /api/software-access` (role-scoped, each row annotated with a server-computed `canLaunch`), admin suspend/reactivate actions, `/portal/software-access` (Launch button only enabled when usable, explains why when it isn't), `/admin/software-access`.
+- **Verified live**: activating a subscription correctly created an ACTIVE, launchable entitlement; pausing it correctly flipped the same entitlement to SUSPENDED (not launchable) in the same test run.
+
+## Phase 6b — Finance Dashboard (✅ Complete)
+
+- **`src/lib/reports.ts`**: `getDashboardStats` — one function, three role shapes (admin/staff scoped by assigned products via the existing `getStaffProductIds`, customer scoped to their own records). MRR/ARR are computed from currently-active subscription lines' locked pricing snapshots normalized to a monthly rate (paise-exact except for the DAILY/WEEKLY/YEARLY→monthly conversion factor itself, which is inherently a non-integer ratio) — a current run-rate figure, deliberately independent of the dashboard's date-range filter, unlike revenue-collected/new-subscriptions which are range-bound.
+- **API**: one `GET /api/reports/dashboard` endpoint branching server-side by role, rather than three separate endpoints.
+- **UI**: `/admin/dashboard` fully replaces the old literal "Phase 1 — authentication only" placeholder with real stat tiles and `recharts` visualizations (revenue trend, subscription growth, invoice-status distribution, product-wise subscriptions) and a date-range filter; staff see the same component, correctly scoped by the API. Customer portal hub (`/portal`) gained a compact stats row (active subscriptions, pending quotations, outstanding/overdue invoices, total paid, upcoming renewals, software-access summary) using the same endpoint.
+
+**Known limitations / deliberately deferred** (documented honestly, not silently dropped):
+- **In-app notification center**: not built — the brief explicitly allows skipping this ("if it fits the existing architecture... optional"). Email notifications for invoice-generated/cancelled and payment success/failure were in scope for this pass but not yet wired up; due-soon/overdue reminder emails and their dedup columns (`dueSoonReminderSentAt`/`overdueReminderSentAt`, already on the schema) are not yet implemented.
+- **Customer support module** (Part 10 of the brief): not built this pass — explicitly the lowest priority in the brief's own ordering ("only if it can be completed without delaying the critical billing/payment workflow").
+- **Invoice/receipt PDF download**: not built this pass in favor of finishing the higher-priority billing/payment/access core first; the invoice and payment detail views show everything on-screen but there's no dedicated PDF export yet (`@react-pdf/renderer` is already a dependency, ready for this when picked back up).
+- **Product demo-access-URL editing**: `products.demoAccessUrl` exists and is read correctly by the entitlement sync, but there's no admin UI field to edit it yet (set directly in the DB for now).
+- No automated route-handler/integration tests were added for the new API routes (none existed to extend in earlier phases either — covered by live smoke testing against the real Neon DB instead, consistent with this project's existing testing convention).
+
+**Isolation note**: this work was done in a separate git worktree (`worktree-phase4-6-billing`, based off `origin/main`'s Phase 3 commit) after another concurrent Claude Code session on this machine was found actively switching branches/rewriting history on the shared working directory mid-session, which briefly discarded uncommitted Phase 4 work before the isolation was set up. All Phase 4–6b work is committed on that branch; it has not been merged into `main` or pushed — that's a deliberate pause for the user to review and decide how to integrate it, given the shared-repo activity observed.
+
+## Not Yet Done (Phase 7)
 
 | Phase | Scope |
 |---|---|
-| 4 | Billing engine: cron + "Run billing now", invoice generation with locking/idempotency, Vitest coverage |
-| 5 | Payments: record/partial/auto-settle, idempotency, overpayment rejection |
-| 6 | Finance dashboard, customer portal, public pricing page |
 | 7 | Seed ~3,000 subscriptions / ~15,000 invoices, performance pass, mobile pass, final deploy |
 
 ## Notes
