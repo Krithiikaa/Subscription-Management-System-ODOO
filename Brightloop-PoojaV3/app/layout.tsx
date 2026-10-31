@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
+import { Montserrat, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta-sans",
-  weight: ["600", "700", "800"],
+  variable: "--font-montserrat",
+  weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const inter = Inter({
+const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500", "600"],
+  variable: "--font-serif",
+  weight: ["400", "600", "700"],
   display: "swap",
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
-  weight: ["500"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "BrightLoop — Subscription Management",
-  description: "Run your recurring revenue in one place.",
+  title: "BrightLoop — Subscription Management Platform",
+  description: "Modern recurring subscription engine, automated billing, and customer lifecycle management.",
 };
 
 export default function RootLayout({
@@ -37,10 +37,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${montserrat.variable} ${playfairDisplay.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-indigo-500 selection:text-white">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

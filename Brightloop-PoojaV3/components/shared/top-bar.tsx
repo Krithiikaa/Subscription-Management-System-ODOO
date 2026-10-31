@@ -4,7 +4,6 @@ import * as React from "react";
 import { Search, Bell, Menu, Shield } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Breadcrumbs, BreadcrumbItem } from "@/components/shared/breadcrumbs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface TopBarProps {
@@ -57,23 +56,25 @@ export function TopBar({
         {/* Command Palette Trigger */}
         <button
           onClick={onOpenCommandPalette}
-          className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-150"
+          className="hidden sm:flex items-center gap-2 h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-150"
         >
           <Search className="h-3.5 w-3.5" />
           <span>Quick search...</span>
-          <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-1.5 font-mono text-[10px] font-medium text-slate-500">
+          <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-1.5 font-mono text-[10px] font-medium text-slate-500">
             Ctrl+K
           </kbd>
         </button>
 
-        {/* Theme Toggle */}
-        <ThemeToggle />
+        {/* Theme Toggle Button */}
+        <div className="p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <ThemeToggle />
+        </div>
 
         {/* Notifications Icon */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+          className="h-9 w-9 rounded-xl text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
           title="Notifications"
         >
           <Bell className="h-4 w-4" />
@@ -81,16 +82,16 @@ export function TopBar({
 
         {/* Role Chip */}
         <div
-          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
             user.role
           )}`}
         >
-          <Shield className="w-3 h-3" />
+          <Shield className="w-3.5 h-3.5" />
           <span>{user.role || "CUSTOMER"}</span>
         </div>
 
         {/* User Avatar Initials */}
-        <div className="flex items-center gap-2 pl-1 border-l border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center text-xs font-semibold shadow-sm">
             {user.name ? user.name.slice(0, 2).toUpperCase() : "U"}
           </div>
@@ -99,4 +100,3 @@ export function TopBar({
     </header>
   );
 }
-

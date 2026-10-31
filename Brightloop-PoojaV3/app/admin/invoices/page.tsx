@@ -134,3 +134,4 @@ export default function AdminInvoicesPage() {
     </div>
   );
 }
+
